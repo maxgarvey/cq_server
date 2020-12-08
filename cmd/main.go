@@ -32,7 +32,7 @@ func main() {
 	// Health check endpoint.
 	router.HandleFunc("/health", endpoints.Health)
 	router.HandleFunc("/ask", endpoints.Ask)
-	router.HandleFunc("/get", endpoints.Get)
+	router.HandleFunc("/get/{id}", endpoints.Get(redisConnection))
 
 	// Kick off endpoints.
 	log.Fatal(
