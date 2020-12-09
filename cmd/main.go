@@ -28,15 +28,22 @@ func main() {
 	}
 	defer redisConnection.Close()
 
-	router := mux.NewRouter().StrictSlash(true)
-	// Health check endpoint.
-	router.HandleFunc("/health", endpoints.Health)
-	router.HandleFunc("/ask", endpoints.Ask)
-	router.HandleFunc("/get/{id}", endpoints.Get(redisConnection))
+	router := Router(redisConnection)
 
 	// Kick off endpoints.
 	log.Fatal(
 		http.ListenAndServe(
 			fmt.Sprintf(":%d", conf.Server.Port),
 			router))
+}
+
+// Router initialize router with endpoints.
+func Router(redisConnection redis.Conn) *mux.Router {
+	router := mux.NewRouter().StrictSlash(true)
+	// Health check endpoint.
+	router.HandleFunc("/health", endpoints.Health)
+	router.HandleFunc("/ask", endpoints.Ask)
+	router.HandleFunc("/get/{id}", endpoints.Get(redisConnection))
+
+	return router
 }
