@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setup(identifier string, status string, body string) (*httptest.ResponseRecorder, *mux.Router) {
+func setupGet(identifier string, status string, body string) (*httptest.ResponseRecorder, *mux.Router) {
 	recorder := httptest.NewRecorder()
 	redisConnection := redigomock.NewConn()
 	router := mux.NewRouter()
@@ -33,10 +33,10 @@ func setup(identifier string, status string, body string) (*httptest.ResponseRec
 }
 
 func TestGetDone(t *testing.T) {
-	recorder, router := setup("done", "DONE", "{\"response\":\"content\"}")
+	recorder, router := setupGet("doneID", "DONE", "{\"response\":\"content\"}")
 
 	// Create request.
-	req, err := http.NewRequest("GET", "/get/done", nil)
+	req, err := http.NewRequest("GET", "/get/doneID", nil)
 	require.NoError(t, err)
 
 	// Run request.
@@ -49,7 +49,7 @@ func TestGetDone(t *testing.T) {
 }
 
 func TestGetNotReady(t *testing.T) {
-	recorder, router := setup(
+	recorder, router := setupGet(
 		"in_progress", "IN_PROGRESS", "{notdoneyet;jsongibberish}")
 
 	// Create request.
@@ -61,5 +61,5 @@ func TestGetNotReady(t *testing.T) {
 
 	// Verify response.
 	assert.Equal(t, recorder.Code, http.StatusOK)
-	assert.Equal(t, recorder.Body.String(), "not ready")
+	assert.Equal(t, "not ready", recorder.Body.String())
 }

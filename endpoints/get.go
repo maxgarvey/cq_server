@@ -4,28 +4,21 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
-)
 
-// Response object in redis cache.
-type Response struct {
-	Body      string `json:"body"`
-	ID        string `json:"id"`
-	Status    string `json:"status"`
-	Timestamp int64  `json:"timestamp"`
-}
+	"github.com/maxgarvey/cq_server/data"
+)
 
 // Get a response.
 func Get(redisConnection redis.Conn) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse response id from URL.
 		requestID := mux.Vars(r)["id"]
-
+		log.Printf("requestID: %s", requestID)
 		// Retrieve raw response from DB.
-		rawResponse, err := redis.StringMap(
+		rawResponse, err := redis.Values(
 			redisConnection.Do(
 				"HGETALL",
 				fmt.Sprintf("response:%s", requestID)))
@@ -34,7 +27,8 @@ func Get(redisConnection redis.Conn) func(w http.ResponseWriter, r *http.Request
 		}
 
 		// Parse response.
-		response, err := parseResponse(rawResponse)
+		var response data.Response
+		err = redis.ScanStruct(rawResponse, &response)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -52,18 +46,4 @@ func Get(redisConnection redis.Conn) func(w http.ResponseWriter, r *http.Request
 		// If response is ready, return it.
 		fmt.Fprintf(w, response.Body)
 	}
-}
-
-func parseResponse(rawResponse map[string]string) (*Response, error) {
-	var err error
-	response := new(Response)
-	response.Body = rawResponse["body"]
-	response.ID = rawResponse["id"]
-	response.Status = rawResponse["status"]
-	response.Timestamp, err = strconv.ParseInt(rawResponse["timestamp"], 10, 64)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return response, nil
 }
