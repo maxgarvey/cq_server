@@ -7,6 +7,8 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
+	"github.com/jonboulle/clockwork"
+	"github.com/thanhpk/randstr"
 
 	"github.com/maxgarvey/cq_server/config"
 	"github.com/maxgarvey/cq_server/endpoints"
@@ -15,7 +17,6 @@ import (
 func main() {
 	// Read in config.
 	conf := config.GetConfig("localhost")
-	log.Printf("conf = %v", conf)
 
 	// Connect to redis based off of config.
 	redisConnection, err := redis.Dial(
@@ -28,7 +29,7 @@ func main() {
 	}
 	defer redisConnection.Close()
 
-	router := Router(redisConnection)
+	router := Router(clockwork.NewRealClock(), redisConnection)
 
 	// Kick off endpoints.
 	log.Fatal(
@@ -38,12 +39,20 @@ func main() {
 }
 
 // Router initialize router with endpoints.
-func Router(redisConnection redis.Conn) *mux.Router {
+func Router(clock clockwork.Clock, redisConnection redis.Conn) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	// Health check endpoint.
-	router.HandleFunc("/health", endpoints.Health)
-	router.HandleFunc("/ask", endpoints.Ask)
-	router.HandleFunc("/get/{id}", endpoints.Get(redisConnection))
+	router.HandleFunc("/health", endpoints.Health).Methods("GET")
+	router.HandleFunc(
+		"/ask/{requestType}",
+		endpoints.Ask(clock, redisConnection, makeToken)).Methods("POST")
+	router.HandleFunc(
+		"/get/{id}",
+		endpoints.Get(redisConnection)).Methods("GET")
 
 	return router
+}
+
+func makeToken() string {
+	return randstr.String(20)
 }
