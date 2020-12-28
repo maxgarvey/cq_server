@@ -1,12 +1,16 @@
 package endpoints
 
 import (
-	// "fmt"
+	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/jonboulle/clockwork"
+	"github.com/maxgarvey/cq_server/data"
 	"github.com/rafaeljusto/redigomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,31 +20,40 @@ func fakeRandomToken() string {
 	return "token"
 }
 
-func setupAsk(requestType string, body string) (*httptest.ResponseRecorder, *mux.Router) {
+func setupAsk(requestType string, body string) (*httptest.ResponseRecorder, *mux.Router, *redigomock.Conn, *redigomock.Cmd) {
 	recorder := httptest.NewRecorder()
 	redisConnection := redigomock.NewConn()
 	router := mux.NewRouter()
+	// 12/06/2020 @ 12:00am (UTC)
+	timestamp, _ := time.Parse(
+		"2006-01-02T15:04:05-0700",
+		"2020-11-06T00:00:00-0000")
+	clock := clockwork.NewFakeClockAt(timestamp)
 	router.HandleFunc(
 		"/ask/{requestType}",
-		Ask(redisConnection, fakeRandomToken))
+		Ask(clock, redisConnection, fakeRandomToken))
 
 	// Set up fake data in mock redis.
-	redisConnection.Command(
-		"SET",
-		"token").ExpectMap(
-		map[string]string{
-			"id":        "token",
-			"status":    "IN_PROGRESS",
-			"timestamp": "1607212800", // 12/06/2020 @ 12:00am (UTC)
-			"body":      body,
-		})
+	response := &data.Response{
+		Body:        "{}",
+		ID:          "token",
+		RequestType: "doWork",
+		Status:      "IN_PROGRESS",
+		Timestamp:   clock.Now().Unix(),
+	}
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		log.Fatal(err)
+	}
+	command := redisConnection.Command(
+		"SET", "response:token", responseJSON)
 
-	return recorder, router
+	return recorder, router, redisConnection, command
 }
 
 func TestAsk(t *testing.T) {
 	// Prelim setup.
-	recorder, router := setupAsk("doWork", "{\"work\":\"content\"}")
+	recorder, router, connection, command := setupAsk("doWork", "{\"work\":\"content\"}")
 
 	// Create request.
 	req, err := http.NewRequest("POST", "/ask/doWork", nil)
@@ -53,4 +66,7 @@ func TestAsk(t *testing.T) {
 	assert.Equal(t, recorder.Code, http.StatusOK)
 	assert.Equal(
 		t, "{\"id\":\"token\"}\n", recorder.Body.String())
+
+	// Verify redis set transaction.
+	assert.Equal(t, 1, connection.Stats(command))
 }
