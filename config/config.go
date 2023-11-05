@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"log"
+	"os"
+
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -22,7 +23,7 @@ func GetConfig(environment string) Config {
 	var c Config
 
 	// Read file to byte array.
-	yamlFile, err := ioutil.ReadFile(
+	yamlFile, err := os.ReadFile(
 		fmt.Sprintf("%s.yaml", environment))
 	if err != nil {
 		log.Printf("Error reading config: %v ", err)
