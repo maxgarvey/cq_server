@@ -37,7 +37,14 @@ func setupGet(identifier string, status string, body string) (*httptest.Response
 		)
 		return nil, nil
 	}
-	mock.ExpectGet(identifier).SetVal(string(responseString))
+	mock.ExpectGet(
+		fmt.Sprintf(
+			"response:%s",
+			identifier,
+		),
+	).SetVal(
+		string(responseString),
+	)
 
 	return recorder, router
 }
@@ -50,16 +57,33 @@ func TestGetDone(t *testing.T) {
 	)
 
 	// Create request.
-	req, err := http.NewRequest("GET", "/get/doneID", nil)
-	require.NoError(t, err)
+	req, err := http.NewRequest(
+		"GET",
+		"/get/doneID",
+		nil,
+	)
+	require.NoError(
+		t,
+		err,
+	)
 
 	// Run request.
-	router.ServeHTTP(recorder, req)
+	router.ServeHTTP(
+		recorder,
+		req,
+	)
 
 	// Verify response.
-	assert.Equal(t, recorder.Code, http.StatusOK)
 	assert.Equal(
-		t, "{\"response\":\"content\"}", recorder.Body.String())
+		t,
+		recorder.Code,
+		http.StatusOK,
+	)
+	assert.Equal(
+		t,
+		"{\"response\":\"content\"}",
+		recorder.Body.String(),
+	)
 }
 
 func TestGetNotReady(t *testing.T) {
