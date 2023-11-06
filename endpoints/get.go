@@ -1,34 +1,33 @@
 package endpoints
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/maxgarvey/cq_server/data"
 )
 
 // Get a response.
-func Get(redisConnection redis.Conn) func(w http.ResponseWriter, r *http.Request) {
+func Get(redisClient redis.Client) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse response id from URL.
 		requestID := mux.Vars(r)["id"]
 		log.Printf("requestID: %s", requestID)
+
 		// Retrieve raw response from DB.
-		rawResponse, err := redis.Values(
-			redisConnection.Do(
-				"HGETALL",
-				fmt.Sprintf("response:%s", requestID)))
-		if err != nil {
-			log.Fatal(err)
-		}
+		var response data.Response
+		ctx := context.Background()
+		err := redisClient.Get(
+			ctx,
+			fmt.Sprintf("response:%s", requestID),
 
 		// Parse response.
-		var response data.Response
-		err = redis.ScanStruct(rawResponse, &response)
+		).Scan(&response)
 		if err != nil {
 			log.Fatal(err)
 		}
