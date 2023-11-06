@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jonboulle/clockwork"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
 	"github.com/thanhpk/randstr"
 
@@ -34,8 +35,24 @@ func main() {
 	)
 	defer redisClient.Close()
 
+	// Connect to Rabbit MQ based off of config.
+	rabbitClient, err := amqp.Dial(
+		fmt.Sprintf(
+			"amqp://guest:guest@%s:%d/",
+			conf.Rabbitmq.Host,
+			conf.Rabbitmq.Port,
+		),
+	)
+	if err != nil {
+		log.Fatalf(
+			"Error connecting to rabbit mq: %s",
+			err.Error(),
+		)
+	}
+
 	router := Router(
 		clockwork.NewRealClock(),
+		rabbitClient,
 		*redisClient,
 	)
 
@@ -52,7 +69,11 @@ func main() {
 }
 
 // Router initialize router with endpoints.
-func Router(clock clockwork.Clock, redisConnection redis.Client) *mux.Router {
+func Router(
+	clock clockwork.Clock,
+	rabbitClient *amqp.Connection,
+	redisConnection redis.Client,
+) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	// Health check endpoint. Is the service running?
 	router.HandleFunc(
