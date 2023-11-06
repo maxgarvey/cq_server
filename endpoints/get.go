@@ -17,14 +17,20 @@ func Get(redisClient redis.Client) func(w http.ResponseWriter, r *http.Request) 
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse response id from URL.
 		requestID := mux.Vars(r)["id"]
-		log.Printf("requestID: %s", requestID)
+		log.Printf(
+			"requestID: %s",
+			requestID,
+		)
 
 		// Retrieve raw response from DB.
 		var response data.Response
 		ctx := context.Background()
 		err := redisClient.Get(
 			ctx,
-			fmt.Sprintf("response:%s", requestID),
+			fmt.Sprintf(
+				"response:%s",
+				requestID,
+			),
 
 		// Parse response.
 		).Scan(&response)
@@ -35,7 +41,8 @@ func Get(redisClient redis.Client) func(w http.ResponseWriter, r *http.Request) 
 		log.Printf(
 			"get endpoint requested. [ID=%s, status=%s]",
 			response.ID,
-			response.Status)
+			response.Status,
+		)
 		// If response is not ready.
 		if response.Status != "DONE" {
 			fmt.Fprintf(w, "not ready")

@@ -14,10 +14,15 @@ type Response struct {
 }
 
 func (r Response) MarshalBinary() ([]byte, error) {
-	return json.Marshal(r)
+	return json.Marshal(
+		r,
+	)
 }
 func (r *Response) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, r)
+	return json.Unmarshal(
+		data,
+		r,
+	)
 }
 
 // AskResponse is response body to ask endpoint.

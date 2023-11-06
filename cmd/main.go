@@ -16,7 +16,9 @@ import (
 
 func main() {
 	// Read in config.
-	conf := config.GetConfig("localhost")
+	conf := config.GetConfig(
+		"localhost",
+	)
 
 	// Connect to redis based off of config.
 	redisClient := redis.NewClient(
@@ -32,26 +34,45 @@ func main() {
 	)
 	defer redisClient.Close()
 
-	router := Router(clockwork.NewRealClock(), *redisClient)
+	router := Router(
+		clockwork.NewRealClock(),
+		*redisClient,
+	)
 
 	// Kick off endpoints.
 	log.Fatal(
 		http.ListenAndServe(
-			fmt.Sprintf(":%d", conf.Server.Port),
-			router))
+			fmt.Sprintf(
+				":%d",
+				conf.Server.Port,
+			),
+			router,
+		),
+	)
 }
 
 // Router initialize router with endpoints.
 func Router(clock clockwork.Clock, redisConnection redis.Client) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
-	// Health check endpoint.
-	router.HandleFunc("/health", endpoints.Health).Methods("GET")
+	// Health check endpoint. Is the service running?
+	router.HandleFunc(
+		"/health",
+		endpoints.Health,
+	).Methods("GET")
+	// Ask endpoint. Ask the service to do a job.
 	router.HandleFunc(
 		"/ask/{requestType}",
-		endpoints.Ask(clock, redisConnection, makeToken)).Methods("POST")
+		endpoints.Ask(
+			clock,
+			redisConnection,
+			makeToken,
+		),
+	).Methods("POST")
+	// Get endpoint. Check on a job.
 	router.HandleFunc(
 		"/get/{id}",
-		endpoints.Get(redisConnection)).Methods("GET")
+		endpoints.Get(redisConnection),
+	).Methods("GET")
 
 	return router
 }
