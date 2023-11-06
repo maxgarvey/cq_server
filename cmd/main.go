@@ -41,7 +41,9 @@ func main() {
 	if conf.Rabbitmq.Host != "" && conf.Rabbitmq.Port != 0 {
 		rabbitClient, err = amqp.Dial(
 			fmt.Sprintf(
-				"amqp://guest:guest@%s:%d/",
+				"amqp://%s:%s@%s:%d/",
+				conf.Rabbitmq.Username,
+				conf.Rabbitmq.Password,
 				conf.Rabbitmq.Host,
 				conf.Rabbitmq.Port,
 			),
@@ -90,6 +92,7 @@ func Router(
 		"/ask/{requestType}",
 		endpoints.Ask(
 			clock,
+			rabbitClient,
 			redisConnection,
 			makeToken,
 		),

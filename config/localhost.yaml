@@ -1,9 +1,10 @@
 redis:
-  connection_type: tcp
   host: 127.0.0.1
   port: 6379
 
 rabbitmq:
+  username: guest
+  password: guest
   host: 127.0.0.1
   port: 5672
 
