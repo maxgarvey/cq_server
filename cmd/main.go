@@ -36,18 +36,23 @@ func main() {
 	defer redisClient.Close()
 
 	// Connect to Rabbit MQ based off of config.
-	rabbitClient, err := amqp.Dial(
-		fmt.Sprintf(
-			"amqp://guest:guest@%s:%d/",
-			conf.Rabbitmq.Host,
-			conf.Rabbitmq.Port,
-		),
-	)
-	if err != nil {
-		log.Fatalf(
-			"Error connecting to rabbit mq: %s",
-			err.Error(),
+	var rabbitClient *amqp.Connection
+	var err error
+	if conf.Rabbitmq.Host != "" && conf.Rabbitmq.Port != 0 {
+		rabbitClient, err = amqp.Dial(
+			fmt.Sprintf(
+				"amqp://guest:guest@%s:%d/",
+				conf.Rabbitmq.Host,
+				conf.Rabbitmq.Port,
+			),
 		)
+		if err != nil {
+			log.Fatalf(
+				"Error connecting to rabbit mq: %s",
+				err.Error(),
+			)
+		}
+		defer rabbitClient.Close()
 	}
 
 	router := Router(

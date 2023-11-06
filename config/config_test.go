@@ -15,7 +15,8 @@ func TestConfig(t *testing.T) {
 	assert.Equal(
 		t,
 		localConfig.Redis.ConnectionType,
-		"tcp")
+		"tcp",
+	)
 	assert.Equal(
 		t,
 		localConfig.Redis.Host,
