@@ -14,6 +14,10 @@ type Config struct {
 		Host           string `yaml:"host"`
 		Port           int    `yaml:"port"`
 	} `yaml:"redis"`
+	Rabbitmq struct {
+		Host string `yaml:"host"`
+		Port int    `yaml:"port"`
+	} `yaml:"rabbitmq"`
 	Server struct {
 		Port int `yaml:"port"`
 	} `yaml:"server"`
