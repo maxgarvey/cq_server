@@ -1,20 +1,21 @@
 package endpoints
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/jonboulle/clockwork"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/maxgarvey/cq_server/data"
 )
 
 // Ask enqueues a request and creates an entry in redis to track it.
-func Ask(clock clockwork.Clock, redisConnection redis.Conn, token func() string) func(w http.ResponseWriter, r *http.Request) {
+func Ask(clock clockwork.Clock, redisClient redis.Client, token func() string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		requestType := mux.Vars(r)["requestType"]
 		token := token()
@@ -31,11 +32,14 @@ func Ask(clock clockwork.Clock, redisConnection redis.Conn, token func() string)
 		if err != nil {
 			log.Fatal(err)
 		}
+		ctx := context.Background()
 		// Put it into redis.
-		redisConnection.Do(
-			"SET",
+		redisClient.Set(
+			ctx,
 			fmt.Sprintf("response:%s", token),
-			responseJSON)
+			responseJSON,
+			0,
+		)
 
 		// TODO: enqueue message to perform the work
 

@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/jonboulle/clockwork"
+	"github.com/redis/go-redis/v9"
 	"github.com/thanhpk/randstr"
 
 	"github.com/maxgarvey/cq_server/config"
@@ -19,17 +19,20 @@ func main() {
 	conf := config.GetConfig("localhost")
 
 	// Connect to redis based off of config.
-	redisConnection, err := redis.Dial(
-		conf.Redis.ConnectionType,
-		fmt.Sprintf(
-			"%s:%d", conf.Redis.Host, conf.Redis.Port))
-	if err != nil {
-		log.Printf("Error connecting to redis. [err=%v]", err)
-		return
-	}
-	defer redisConnection.Close()
+	redisClient := redis.NewClient(
+		&redis.Options{
+			Addr: fmt.Sprintf(
+				"%s:%d",
+				conf.Redis.Host,
+				conf.Redis.Port,
+			),
+			Password: "", // no password set
+			DB:       0,  // use default DB
+		},
+	)
+	defer redisClient.Close()
 
-	router := Router(clockwork.NewRealClock(), redisConnection)
+	router := Router(clockwork.NewRealClock(), *redisClient)
 
 	// Kick off endpoints.
 	log.Fatal(
@@ -39,7 +42,7 @@ func main() {
 }
 
 // Router initialize router with endpoints.
-func Router(clock clockwork.Clock, redisConnection redis.Conn) *mux.Router {
+func Router(clock clockwork.Clock, redisConnection redis.Client) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	// Health check endpoint.
 	router.HandleFunc("/health", endpoints.Health).Methods("GET")
