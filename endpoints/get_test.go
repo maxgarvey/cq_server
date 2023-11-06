@@ -105,6 +105,14 @@ func TestGetNotReady(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 
 	// Verify response.
-	assert.Equal(t, recorder.Code, http.StatusOK)
-	assert.Equal(t, "not ready", recorder.Body.String())
+	assert.Equal(
+		t,
+		recorder.Code,
+		http.StatusOK,
+	)
+	assert.Equal(
+		t,
+		"not ready",
+		recorder.Body.String(),
+	)
 }

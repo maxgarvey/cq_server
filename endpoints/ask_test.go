@@ -62,20 +62,37 @@ func setupAsk(requestType string, body string) (*httptest.ResponseRecorder, *mux
 
 func TestAsk(t *testing.T) {
 	// Prelim setup.
-	recorder, router := setupAsk("doWork", "{\"work\":\"content\"}")
+	recorder, router := setupAsk(
+		"doWork",
+		"{\"work\":\"content\"}",
+	)
 
 	// Create request.
-	req, err := http.NewRequest("POST", "/ask/doWork", nil)
-	require.NoError(t, err)
+	req, err := http.NewRequest(
+		"POST",
+		"/ask/doWork",
+		nil,
+	)
+	require.NoError(
+		t,
+		err,
+	)
 
 	// Run request.
-	router.ServeHTTP(recorder, req)
+	router.ServeHTTP(
+		recorder,
+		req,
+	)
 
 	// Verify response.
-	assert.Equal(t, recorder.Code, http.StatusOK)
 	assert.Equal(
-		t, "{\"id\":\"token\"}\n", recorder.Body.String())
-
-	// Verify redis set transaction.
-	// assert.Equal(t, 1, client.(command))
+		t,
+		recorder.Code,
+		http.StatusOK,
+	)
+	assert.Equal(
+		t,
+		"{\"id\":\"token\"}\n",
+		recorder.Body.String(),
+	)
 }

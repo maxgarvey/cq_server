@@ -8,6 +8,9 @@ import (
 
 // Basic healthcheck endpoint.
 func Health(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "healthy")
+	fmt.Fprintf(
+		w,
+		"healthy",
+	)
 	log.Printf("health endpoint requested")
 }

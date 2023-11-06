@@ -24,15 +24,28 @@ func GetConfig(environment string) Config {
 
 	// Read file to byte array.
 	yamlFile, err := os.ReadFile(
-		fmt.Sprintf("%s.yaml", environment))
+		fmt.Sprintf(
+			"%s.yaml",
+			environment,
+		),
+	)
 	if err != nil {
-		log.Printf("Error reading config: %v ", err)
+		log.Printf(
+			"Error reading config: %v ",
+			err,
+		)
 	}
 
 	// Unmarshal into config struct.
-	err = yaml.Unmarshal(yamlFile, &c)
+	err = yaml.Unmarshal(
+		yamlFile,
+		&c,
+	)
 	if err != nil {
-		log.Fatalf("Error unmarshalling YAML: %v", err)
+		log.Fatalf(
+			"Error unmarshalling YAML: %v",
+			err,
+		)
 	}
 
 	return c

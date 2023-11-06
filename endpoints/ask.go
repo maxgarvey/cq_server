@@ -43,7 +43,10 @@ func Ask(clock clockwork.Clock, redisClient redis.Client, token func() string) f
 
 		// TODO: enqueue message to perform the work
 
-		log.Printf("ask endpoint requested. [requestType=%s]", requestType)
+		log.Printf(
+			"ask endpoint requested. [requestType=%s]",
+			requestType,
+		)
 
 		// Return token associated with this request.
 		askResp := &data.AskResponse{
