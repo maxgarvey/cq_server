@@ -10,13 +10,15 @@ import (
 
 type Config struct {
 	Redis struct {
-		ConnectionType string `yaml:"connection_type"`
-		Host           string `yaml:"host"`
-		Port           int    `yaml:"port"`
-	} `yaml:"redis"`
-	Rabbitmq struct {
 		Host string `yaml:"host"`
 		Port int    `yaml:"port"`
+	} `yaml:"redis"`
+	Rabbitmq struct {
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		Queuname string `yaml:"queuename"`
 	} `yaml:"rabbitmq"`
 	Server struct {
 		Port int `yaml:"port"`

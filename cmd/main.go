@@ -7,12 +7,12 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jonboulle/clockwork"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
 	"github.com/thanhpk/randstr"
 
 	"github.com/maxgarvey/cq_server/config"
 	"github.com/maxgarvey/cq_server/endpoints"
+	"github.com/maxgarvey/cq_server/rabbitmq"
 )
 
 func main() {
@@ -36,15 +36,15 @@ func main() {
 	defer redisClient.Close()
 
 	// Connect to Rabbit MQ based off of config.
-	var rabbitClient *amqp.Connection
+	var rabbitmqClient *rabbitmq.Rabbitmq
 	var err error
 	if conf.Rabbitmq.Host != "" && conf.Rabbitmq.Port != 0 {
-		rabbitClient, err = amqp.Dial(
-			fmt.Sprintf(
-				"amqp://guest:guest@%s:%d/",
-				conf.Rabbitmq.Host,
-				conf.Rabbitmq.Port,
-			),
+		rabbitmqClient, err = rabbitmq.Init(
+			conf.Rabbitmq.Username,
+			conf.Rabbitmq.Password,
+			conf.Rabbitmq.Host,
+			conf.Rabbitmq.Port,
+			conf.Rabbitmq.Queuname,
 		)
 		if err != nil {
 			log.Fatalf(
@@ -52,12 +52,11 @@ func main() {
 				err.Error(),
 			)
 		}
-		defer rabbitClient.Close()
 	}
 
 	router := Router(
 		clockwork.NewRealClock(),
-		rabbitClient,
+		rabbitmqClient,
 		*redisClient,
 	)
 
@@ -76,7 +75,7 @@ func main() {
 // Router initialize router with endpoints.
 func Router(
 	clock clockwork.Clock,
-	rabbitClient *amqp.Connection,
+	rabbitClient *rabbitmq.Rabbitmq,
 	redisConnection redis.Client,
 ) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
@@ -90,6 +89,7 @@ func Router(
 		"/ask/{requestType}",
 		endpoints.Ask(
 			clock,
+			*rabbitClient,
 			redisConnection,
 			makeToken,
 		),
