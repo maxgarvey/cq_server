@@ -17,7 +17,7 @@ type Rabbitmq struct {
 	Queue      *amqp.Queue
 }
 
-func Init(username string, password string, host string, port int, queuename string) *Rabbitmq {
+func Init(username string, password string, host string, port int, queuename string) (*Rabbitmq, error) {
 	// Connect to instance
 	connection, err := amqp.Dial(
 		fmt.Sprintf(
@@ -29,13 +29,13 @@ func Init(username string, password string, host string, port int, queuename str
 		),
 	)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Connect to channel
 	channel, err := connection.Channel()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Connect to queue
@@ -48,7 +48,7 @@ func Init(username string, password string, host string, port int, queuename str
 		nil,       // args
 	)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &Rabbitmq{
@@ -59,7 +59,7 @@ func Init(username string, password string, host string, port int, queuename str
 		Channel:    channel,
 		Connection: connection,
 		Queue:      &queue,
-	}
+	}, nil
 }
 
 func (r Rabbitmq) Publish(message string) {
