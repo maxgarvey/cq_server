@@ -14,11 +14,6 @@ func TestConfig(t *testing.T) {
 	// Redis
 	assert.Equal(
 		t,
-		localConfig.Redis.ConnectionType,
-		"tcp",
-	)
-	assert.Equal(
-		t,
 		localConfig.Redis.Host,
 		"127.0.0.1",
 	)
@@ -29,6 +24,16 @@ func TestConfig(t *testing.T) {
 	)
 
 	// RabbitMQ
+	assert.Equal(
+		t,
+		localConfig.Rabbitmq.Username,
+		"guest",
+	)
+	assert.Equal(
+		t,
+		localConfig.Rabbitmq.Password,
+		"guest",
+	)
 	assert.Equal(
 		t,
 		localConfig.Rabbitmq.Host,

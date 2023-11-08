@@ -9,18 +9,26 @@ import (
 )
 
 type Config struct {
-	Redis struct {
-		ConnectionType string `yaml:"connection_type"`
-		Host           string `yaml:"host"`
-		Port           int    `yaml:"port"`
-	} `yaml:"redis"`
-	Rabbitmq struct {
-		Host string `yaml:"host"`
-		Port int    `yaml:"port"`
-	} `yaml:"rabbitmq"`
-	Server struct {
-		Port int `yaml:"port"`
-	} `yaml:"server"`
+	Redis    Redis    `yaml:"redis"`
+	Rabbitmq Rabbitmq `yaml:"rabbitmq"`
+	Server   Server   `yaml:"server"`
+}
+
+type Rabbitmq struct {
+	Username  string `yaml:"username"`
+	Password  string `yaml:"password"`
+	Host      string `yaml:"host"`
+	Port      int    `yaml:"port"`
+	Queuename string `yaml:"queuename"`
+}
+
+type Redis struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+}
+
+type Server struct {
+	Port int `yaml:"port"`
 }
 
 func GetConfig(environment string) Config {

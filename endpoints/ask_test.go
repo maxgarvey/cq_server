@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jonboulle/clockwork"
 	"github.com/maxgarvey/cq_server/data"
+	"github.com/maxgarvey/cq_server/rabbitmq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +36,9 @@ func setupAsk(requestType string, body string) (*httptest.ResponseRecorder, *mux
 		"/ask/{requestType}",
 		Ask(
 			clock,
-			*db, fakeRandomToken,
+			rabbitmq.Rabbitmq{},
+			*db,
+			fakeRandomToken,
 		),
 	)
 
