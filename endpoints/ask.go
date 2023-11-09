@@ -9,14 +9,14 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jonboulle/clockwork"
-	"github.com/redis/go-redis/v9"
 
 	"github.com/maxgarvey/cq_server/data"
 	"github.com/maxgarvey/cq_server/rabbitmq"
+	"github.com/maxgarvey/cq_server/redis"
 )
 
 // Ask enqueues a request and creates an entry in redis to track it.
-func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbitmq, redisClient redis.Client, token func() string) func(w http.ResponseWriter, r *http.Request) {
+func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbitmq, redisClient *redis.Redis, token func() string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		requestType := mux.Vars(r)["requestType"]
 		token := token()
@@ -39,7 +39,6 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbitmq, redisClient redis.Cl
 			ctx,
 			fmt.Sprintf("response:%s", token),
 			responseJSON,
-			0,
 		)
 
 		// TODO: enqueue message to perform the work

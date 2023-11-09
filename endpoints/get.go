@@ -7,13 +7,13 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/redis/go-redis/v9"
 
 	"github.com/maxgarvey/cq_server/data"
+	"github.com/maxgarvey/cq_server/redis"
 )
 
 // Get a response.
-func Get(redisClient redis.Client) func(w http.ResponseWriter, r *http.Request) {
+func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse response id from URL.
 		requestID := mux.Vars(r)["id"]
@@ -22,18 +22,16 @@ func Get(redisClient redis.Client) func(w http.ResponseWriter, r *http.Request) 
 			requestID,
 		)
 
-		// Retrieve raw response from DB.
+		// Retrieve response from DB.
 		var response data.Response
 		ctx := context.Background()
-		err := redisClient.Get(
+		response, err := redisClient.Get(
 			ctx,
 			fmt.Sprintf(
 				"response:%s",
 				requestID,
 			),
-
-		// Parse response.
-		).Scan(&response)
+		)
 		if err != nil {
 			log.Fatal(err)
 		}

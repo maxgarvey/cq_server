@@ -15,6 +15,8 @@ import (
 	"github.com/maxgarvey/cq_server/rabbitmq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/maxgarvey/cq_server/redis"
 )
 
 func fakeRandomToken() string {
@@ -24,6 +26,9 @@ func fakeRandomToken() string {
 func setupAsk(requestType string, body string) (*httptest.ResponseRecorder, *mux.Router) {
 	recorder := httptest.NewRecorder()
 	db, mock := redismock.NewClientMock()
+	mockedRedis := &redis.Redis{
+		Client: *db,
+	}
 	router := mux.NewRouter()
 	// 12/06/2020 @ 12:00am (UTC)
 	timestamp, _ := time.Parse(
@@ -37,7 +42,7 @@ func setupAsk(requestType string, body string) (*httptest.ResponseRecorder, *mux
 		Ask(
 			clock,
 			rabbitmq.Rabbitmq{},
-			*db,
+			mockedRedis,
 			fakeRandomToken,
 		),
 	)

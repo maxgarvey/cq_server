@@ -10,16 +10,21 @@ import (
 
 	"github.com/go-redis/redismock/v9"
 	"github.com/gorilla/mux"
-	"github.com/maxgarvey/cq_server/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/maxgarvey/cq_server/data"
+	"github.com/maxgarvey/cq_server/redis"
 )
 
 func setupGet(identifier string, status string, body string) (*httptest.ResponseRecorder, *mux.Router) {
 	recorder := httptest.NewRecorder()
 	db, mock := redismock.NewClientMock()
+	mockedRedis := &redis.Redis{
+		Client: *db,
+	}
 	router := mux.NewRouter()
-	router.HandleFunc("/get/{id}", Get(*db))
+	router.HandleFunc("/get/{id}", Get(mockedRedis))
 
 	// Set up fake data in mock redis.
 	responseString, err := json.Marshal(&data.Response{

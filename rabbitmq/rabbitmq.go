@@ -5,27 +5,25 @@ import (
 	"fmt"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+
+	config "github.com/maxgarvey/cq_server/config"
 )
 
 type Rabbitmq struct {
-	Username   string
-	Password   string
-	Host       string
-	Port       int
 	Channel    *amqp.Channel
 	Connection *amqp.Connection
 	Queue      *amqp.Queue
 }
 
-func Init(username string, password string, host string, port int, queuename string) (*Rabbitmq, error) {
+func Init(config config.Rabbitmq) (*Rabbitmq, error) {
 	// Connect to instance
 	connection, err := amqp.Dial(
 		fmt.Sprintf(
 			"amqp://%s:%s@%s:%d/",
-			username,
-			password,
-			host,
-			port,
+			config.Username,
+			config.Password,
+			config.Host,
+			config.Port,
 		),
 	)
 	if err != nil {
@@ -40,22 +38,18 @@ func Init(username string, password string, host string, port int, queuename str
 
 	// Connect to queue
 	queue, err := channel.QueueDeclare(
-		queuename, // name of queue
-		false,     // is durable?
-		false,     // auto delete
-		false,     // exclusive
-		false,     // no wait
-		nil,       // args
+		config.Queuename, // name of queue
+		false,            // is durable?
+		false,            // auto delete
+		false,            // exclusive
+		false,            // no wait
+		nil,              // args
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Rabbitmq{
-		Username:   username,
-		Password:   password,
-		Host:       host,
-		Port:       port,
 		Channel:    channel,
 		Connection: connection,
 		Queue:      &queue,
