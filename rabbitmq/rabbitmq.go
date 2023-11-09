@@ -63,6 +63,7 @@ func (r Rabbitmq) Close() {
 	r.Connection.Close()
 }
 
+// Enqueue a message to Rabbit MQ.
 func (r Rabbitmq) Publish(message string) {
 	err := r.Channel.PublishWithContext(
 		context.TODO(),
@@ -81,6 +82,7 @@ func (r Rabbitmq) Publish(message string) {
 	}
 }
 
+// Consume from the queue.
 func (r Rabbitmq) Consume() <-chan amqp.Delivery {
 	messages, err := r.Channel.ConsumeWithContext(
 		context.TODO(),

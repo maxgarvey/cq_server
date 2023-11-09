@@ -60,7 +60,10 @@ func (r Redis) Set(
 	key string,
 	value []byte,
 ) error {
-	// TODO: capture value returned, status cmd, in a meaningful way
-	r.Client.Set(ctx, key, value, 0)
-	return nil
+	return r.Client.Set(
+		ctx,
+		key,
+		value,
+		0,
+	).Err()
 }

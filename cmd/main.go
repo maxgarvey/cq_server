@@ -13,6 +13,7 @@ import (
 	"github.com/maxgarvey/cq_server/endpoints"
 	"github.com/maxgarvey/cq_server/rabbitmq"
 	"github.com/maxgarvey/cq_server/redis"
+	"github.com/maxgarvey/cq_server/worker"
 )
 
 func main() {
@@ -43,10 +44,22 @@ func main() {
 		defer rabbitmqClient.Close()
 	}
 
+	// Initialize router to handle web requests.
 	router := Router(
 		clockwork.NewRealClock(),
 		rabbitmqClient,
 		redisClient,
+	)
+
+	// Initialize queue worker.
+	queueWorker := worker.Init(rabbitmqClient, redisClient)
+	// Start work.
+	// TODO: add multithreading for workers
+	queueWorker.Work()
+
+	fmt.Printf(
+		"Server listening on 127.0.0.1:%d",
+		conf.Server.Port,
 	)
 
 	// Kick off endpoints.
