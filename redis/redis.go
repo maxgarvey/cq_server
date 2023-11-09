@@ -35,6 +35,12 @@ func Init(config config.Redis) *Redis {
 	}
 }
 
+// Close connection to redis.
+func (r Redis) Close() {
+	r.Client.Conn().Close()
+}
+
+// Retrieve an item from redis datastore.
 func (r Redis) Get(ctx context.Context, key string) (data.Response, error) {
 	var response data.Response
 	err := r.Client.Get(

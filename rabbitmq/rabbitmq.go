@@ -56,6 +56,13 @@ func Init(config config.Rabbitmq) (*Rabbitmq, error) {
 	}, nil
 }
 
+// Close connection to RabbitMQ
+func (r Rabbitmq) Close() {
+	// TODO: is this the right order of operations?
+	r.Channel.Close()
+	r.Connection.Close()
+}
+
 func (r Rabbitmq) Publish(message string) {
 	err := r.Channel.PublishWithContext(
 		context.TODO(),
