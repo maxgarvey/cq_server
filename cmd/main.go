@@ -25,8 +25,7 @@ func main() {
 	redisClient := redis.Init(
 		conf.Redis,
 	)
-	// TODO: actually defer closing the connection.
-	// defer redisClient.Close()
+	defer redisClient.Close()
 
 	// Connect to Rabbit MQ based off of config.
 	var rabbitmqClient *rabbitmq.Rabbitmq
@@ -41,6 +40,7 @@ func main() {
 				err.Error(),
 			)
 		}
+		defer rabbitmqClient.Close()
 	}
 
 	router := Router(
