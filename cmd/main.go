@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,9 +18,16 @@ import (
 )
 
 func main() {
+	configFile := flag.String(
+		"config",
+		"../config/example.yaml",
+		"location of yaml configuration file. "+
+			"see config.go for more info. default = example.yaml",
+	)
+
 	// Read in config.
 	conf := config.GetConfig(
-		"localhost",
+		*configFile,
 	)
 
 	// Connect to redis based off of config.

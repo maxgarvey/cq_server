@@ -8,7 +8,7 @@ import (
 
 func TestConfig(t *testing.T) {
 	localConfig := GetConfig(
-		"localhost",
+		"example.yaml",
 	)
 
 	// Redis

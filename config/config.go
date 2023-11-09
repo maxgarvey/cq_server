@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -31,15 +30,12 @@ type Server struct {
 	Port int `yaml:"port"`
 }
 
-func GetConfig(environment string) Config {
+func GetConfig(configFile string) Config {
 	var c Config
 
 	// Read file to byte array.
 	yamlFile, err := os.ReadFile(
-		fmt.Sprintf(
-			"%s.yaml",
-			environment,
-		),
+		configFile,
 	)
 	if err != nil {
 		log.Printf(
