@@ -21,7 +21,7 @@ func main() {
 	configFile := flag.String(
 		"config",
 		"../config/example.yaml",
-		"location of yaml configuration file. ",
+		"location of yaml configuration file.",
 	)
 	flag.Parse()
 
