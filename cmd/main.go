@@ -21,9 +21,9 @@ func main() {
 	configFile := flag.String(
 		"config",
 		"../config/example.yaml",
-		"location of yaml configuration file. "+
-			"see config.go for more info. default = example.yaml",
+		"location of yaml configuration file. ",
 	)
+	flag.Parse()
 
 	// Read in config.
 	conf := config.GetConfig(
