@@ -18,9 +18,10 @@ import (
 )
 
 func main() {
+	// Accept flag for config file.
 	configFile := flag.String(
 		"config",
-		"../config/example.yaml",
+		"./config/example.yaml",
 		"location of yaml configuration file.",
 	)
 	flag.Parse()
