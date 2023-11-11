@@ -23,7 +23,7 @@ func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) 
 		)
 
 		// Retrieve response from DB.
-		var response data.Response
+		var response data.Record
 		ctx := context.Background()
 		response, err := redisClient.Get(
 			ctx,
@@ -39,10 +39,10 @@ func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) 
 		log.Printf(
 			"get endpoint requested. [ID=%s, status=%s]",
 			response.ID,
-			response.Status,
+			fmt.Sprint(response.Status),
 		)
 		// If response is not ready.
-		if response.Status != "DONE" {
+		if response.Status != data.DONE {
 			fmt.Fprintf(w, "not ready")
 			return
 		}
