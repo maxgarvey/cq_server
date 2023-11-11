@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -16,14 +17,19 @@ import (
 )
 
 // Ask enqueues a request and creates an entry in redis to track it.
-func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbitmq, redisClient *redis.Redis, token func() string) func(w http.ResponseWriter, r *http.Request) {
+func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Redis, token func() string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		requestType := mux.Vars(r)["requestType"]
 		token := token()
 
+		requestBody, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// Create redis record of response.
 		response := &data.Response{
-			Body:        "{}",
+			Body:        string(requestBody),
 			ID:          token,
 			RequestType: requestType,
 			Status:      "IN_PROGRESS",
@@ -41,7 +47,10 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbitmq, redisClient *redis.R
 			responseJSON,
 		)
 
-		// TODO: enqueue message to perform the work
+		fmt.Printf("responseJSON: %s\n", string(responseJSON))
+
+		// enqueue message to perform the work
+		rabbitmq.Publish(string(responseJSON))
 
 		log.Printf(
 			"ask endpoint requested. [requestType=%s]",

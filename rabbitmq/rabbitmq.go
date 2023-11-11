@@ -9,6 +9,12 @@ import (
 	config "github.com/maxgarvey/cq_server/config"
 )
 
+type Rabbit interface {
+	Close()
+	Consume() <-chan amqp.Delivery
+	Publish(message string)
+}
+
 type Rabbitmq struct {
 	Channel    *amqp.Channel
 	Connection *amqp.Connection

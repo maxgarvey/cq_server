@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -23,7 +24,7 @@ func fakeRandomToken() string {
 	return "token"
 }
 
-func setupAsk(requestType string, body string) (*httptest.ResponseRecorder, *mux.Router) {
+func setupAsk(requestType string) (*httptest.ResponseRecorder, *mux.Router, *rabbitmq.FakeRabbitmq) {
 	recorder := httptest.NewRecorder()
 	db, mock := redismock.NewClientMock()
 	mockedRedis := &redis.Redis{
@@ -36,12 +37,13 @@ func setupAsk(requestType string, body string) (*httptest.ResponseRecorder, *mux
 		"2020-11-06T00:00:00-0000",
 	)
 	clock := clockwork.NewFakeClockAt(timestamp)
+	fakeRabbitmq := rabbitmq.InitFake()
 
 	router.HandleFunc(
 		"/ask/{requestType}",
 		Ask(
 			clock,
-			rabbitmq.Rabbitmq{},
+			&fakeRabbitmq,
 			mockedRedis,
 			fakeRandomToken,
 		),
@@ -65,21 +67,27 @@ func setupAsk(requestType string, body string) (*httptest.ResponseRecorder, *mux
 		0,
 	)
 
-	return recorder, router
+	return recorder, router, &fakeRabbitmq
 }
 
 func TestAsk(t *testing.T) {
 	// Prelim setup.
-	recorder, router := setupAsk(
+	recorder, router, fakeRabbitmq := setupAsk(
 		"doWork",
-		"{\"work\":\"content\"}",
+	)
+
+	// Set request body for incoming request to ask endpoint.
+	requestBody := bytes.NewReader(
+		[]byte(
+			"{\"work\":\"content\"}",
+		),
 	)
 
 	// Create request.
 	req, err := http.NewRequest(
 		"POST",
 		"/ask/doWork",
-		nil,
+		requestBody,
 	)
 	require.NoError(
 		t,
@@ -102,5 +110,14 @@ func TestAsk(t *testing.T) {
 		t,
 		"{\"id\":\"token\"}\n",
 		recorder.Body.String(),
+	)
+
+	// Verify publish to rabbit.
+	assert.Equal(
+		t,
+		fakeRabbitmq.PublishedMessages,
+		[]string{
+			"{\"Body\":\"{\\\"work\\\":\\\"content\\\"}\",\"ID\":\"token\",\"RequestType\":\"doWork\",\"Status\":\"IN_PROGRESS\",\"Timestamp\":1604620800}",
+		},
 	)
 }
