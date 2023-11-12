@@ -4,21 +4,28 @@ import (
 	"encoding/json"
 )
 
-// Response object in redis cache.
-type Response struct {
+type Status int
+
+const (
+	IN_PROGRESS Status = iota
+	DONE
+)
+
+// Record object in redis cache.
+type Record struct {
 	Body        string `redis:"body"`
 	ID          string `redis:"id"`
 	RequestType string `redis:"requestType"`
-	Status      string `redis:"status"`
+	Status      Status `redis:"status"`
 	Timestamp   int64  `redis:"timestamp"`
 }
 
-func (r Response) MarshalBinary() ([]byte, error) {
+func (r Record) MarshalBinary() ([]byte, error) {
 	return json.Marshal(
 		r,
 	)
 }
-func (r *Response) UnmarshalBinary(data []byte) error {
+func (r *Record) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(
 		data,
 		r,

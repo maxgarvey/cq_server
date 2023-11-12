@@ -28,11 +28,11 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 		}
 
 		// Create redis record of response.
-		response := &data.Response{
+		response := &data.Record{
 			Body:        string(requestBody),
 			ID:          token,
 			RequestType: requestType,
-			Status:      "IN_PROGRESS",
+			Status:      data.IN_PROGRESS,
 			Timestamp:   clock.Now().Unix(),
 		}
 		responseJSON, err := json.Marshal(response)

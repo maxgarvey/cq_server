@@ -17,7 +17,7 @@ import (
 	"github.com/maxgarvey/cq_server/redis"
 )
 
-func setupGet(identifier string, status string, body string) (*httptest.ResponseRecorder, *mux.Router) {
+func setupGet(identifier string, status data.Status, body string) (*httptest.ResponseRecorder, *mux.Router) {
 	recorder := httptest.NewRecorder()
 	db, mock := redismock.NewClientMock()
 	mockedRedis := &redis.Redis{
@@ -27,7 +27,7 @@ func setupGet(identifier string, status string, body string) (*httptest.Response
 	router.HandleFunc("/get/{id}", Get(mockedRedis))
 
 	// Set up fake data in mock redis.
-	responseString, err := json.Marshal(&data.Response{
+	responseString, err := json.Marshal(&data.Record{
 		ID:        identifier,
 		Status:    status,
 		Timestamp: 1607212800,
@@ -57,7 +57,7 @@ func setupGet(identifier string, status string, body string) (*httptest.Response
 func TestGetDone(t *testing.T) {
 	recorder, router := setupGet(
 		"doneID",
-		"DONE",
+		data.DONE,
 		"{\"response\":\"content\"}",
 	)
 
@@ -94,7 +94,7 @@ func TestGetDone(t *testing.T) {
 func TestGetNotReady(t *testing.T) {
 	recorder, router := setupGet(
 		"in_progress",
-		"IN_PROGRESS",
+		data.IN_PROGRESS,
 		"{notdoneyet;jsongibberish}",
 	)
 

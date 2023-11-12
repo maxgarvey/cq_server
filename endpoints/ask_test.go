@@ -50,11 +50,11 @@ func setupAsk(requestType string) (*httptest.ResponseRecorder, *mux.Router, *rab
 	)
 
 	// Set up fake data in mock redis.
-	response := &data.Response{
+	response := &data.Record{
 		Body:        "{}",
 		ID:          "token",
 		RequestType: "doWork",
-		Status:      "IN_PROGRESS",
+		Status:      data.IN_PROGRESS,
 		Timestamp:   clock.Now().Unix(),
 	}
 	responseJSON, err := json.Marshal(response)
@@ -117,7 +117,7 @@ func TestAsk(t *testing.T) {
 		t,
 		fakeRabbitmq.PublishedMessages,
 		[]string{
-			"{\"Body\":\"{\\\"work\\\":\\\"content\\\"}\",\"ID\":\"token\",\"RequestType\":\"doWork\",\"Status\":\"IN_PROGRESS\",\"Timestamp\":1604620800}",
+			"{\"Body\":\"{\\\"work\\\":\\\"content\\\"}\",\"ID\":\"token\",\"RequestType\":\"doWork\",\"Status\":0,\"Timestamp\":1604620800}",
 		},
 	)
 }

@@ -41,8 +41,8 @@ func (r Redis) Close() {
 }
 
 // Retrieve an item from redis datastore.
-func (r Redis) Get(ctx context.Context, key string) (data.Response, error) {
-	var response data.Response
+func (r Redis) Get(ctx context.Context, key string) (data.Record, error) {
+	var response data.Record
 	err := r.Client.Get(
 		ctx,
 		key,
