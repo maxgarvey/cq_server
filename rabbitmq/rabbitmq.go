@@ -11,7 +11,7 @@ import (
 
 type Rabbit interface {
 	Close()
-	Consume() <-chan amqp.Delivery
+	Consume() chan amqp.Delivery
 	Publish(message string)
 }
 
@@ -89,8 +89,8 @@ func (r Rabbitmq) Publish(message string) {
 }
 
 // Consume from the queue.
-func (r Rabbitmq) Consume() <-chan amqp.Delivery {
-	messages, err := r.Channel.ConsumeWithContext(
+func (r Rabbitmq) Consume() chan amqp.Delivery {
+	messagesRaw, err := r.Channel.ConsumeWithContext(
 		context.TODO(),
 		r.Queue.Name,
 		"",
@@ -104,5 +104,11 @@ func (r Rabbitmq) Consume() <-chan amqp.Delivery {
 		// TODO: improve handling of error during consume
 		panic(err)
 	}
+	messages := make(chan amqp.Delivery)
+	go func() {
+		for msg := range messagesRaw {
+			messages <- msg
+		}
+	}()
 	return messages
 }
