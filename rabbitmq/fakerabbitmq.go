@@ -15,7 +15,7 @@ func InitFake() FakeRabbitmq {
 
 func (f FakeRabbitmq) Close() {}
 
-func (f *FakeRabbitmq) Consume() chan amqp.Delivery {
+func (f *FakeRabbitmq) Consume() <-chan amqp.Delivery {
 	return f.ConsumeChannel
 }
 
