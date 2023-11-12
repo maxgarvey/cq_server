@@ -6,7 +6,7 @@ import (
 
 type FakeRabbitmq struct {
 	PublishedMessages []string
-	ConsumeChannel    <-chan amqp.Delivery
+	ConsumeChannel    chan amqp.Delivery
 }
 
 func InitFake() FakeRabbitmq {
