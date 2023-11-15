@@ -12,11 +12,11 @@ import (
 	"github.com/go-redis/redismock/v9"
 	"github.com/gorilla/mux"
 	"github.com/jonboulle/clockwork"
-	"github.com/maxgarvey/cq_server/data"
-	"github.com/maxgarvey/cq_server/rabbitmq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/maxgarvey/cq_server/data"
+	"github.com/maxgarvey/cq_server/rabbitmq"
 	"github.com/maxgarvey/cq_server/redis"
 )
 
