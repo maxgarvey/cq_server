@@ -50,20 +50,20 @@ func setupAsk(requestType string) (*httptest.ResponseRecorder, *mux.Router, *rab
 	)
 
 	// Set up fake data in mock redis.
-	response := &data.Record{
+	record := &data.Record{
 		Body:        "{}",
 		ID:          "token",
 		RequestType: "doWork",
 		Status:      data.IN_PROGRESS,
 		Timestamp:   clock.Now().Unix(),
 	}
-	responseJSON, err := json.Marshal(response)
+	recordJSON, err := json.Marshal(record)
 	if err != nil {
 		log.Fatal(err)
 	}
 	mock.ExpectSet(
-		"response:token",
-		responseJSON,
+		"doWork:token",
+		recordJSON,
 		0,
 	)
 

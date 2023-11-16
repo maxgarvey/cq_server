@@ -27,7 +27,7 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 			log.Fatal(err)
 		}
 
-		// Create redis record of response.
+		// Create redis record of request.
 		response := &data.Record{
 			Body:        string(requestBody),
 			ID:          token,
@@ -43,11 +43,13 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 		// Put it into redis.
 		redisClient.Set(
 			ctx,
-			fmt.Sprintf("response:%s", token),
+			fmt.Sprintf(
+				"%s:%s",
+				requestType,
+				token,
+			),
 			responseJSON,
 		)
-
-		fmt.Printf("responseJSON: %s\n", string(responseJSON))
 
 		// enqueue message to perform the work
 		rabbitmq.Publish(string(responseJSON))

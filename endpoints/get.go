@@ -15,6 +15,8 @@ import (
 // Get a response.
 func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse the requestType from URL.
+		requestType := mux.Vars(r)["requestType"]
 		// Parse response id from URL.
 		requestID := mux.Vars(r)["id"]
 		log.Printf(
@@ -28,7 +30,8 @@ func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) 
 		response, err := redisClient.Get(
 			ctx,
 			fmt.Sprintf(
-				"response:%s",
+				"%s:%s",
+				requestType,
 				requestID,
 			),
 		)
@@ -37,7 +40,8 @@ func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) 
 		}
 
 		log.Printf(
-			"get endpoint requested. [ID=%s, status=%s]",
+			"get endpoint requested. [requestType=%s, ID=%s, status=%s]",
+			requestType,
 			response.ID,
 			fmt.Sprint(response.Status),
 		)

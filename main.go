@@ -107,7 +107,7 @@ func Router(
 	).Methods("POST")
 	// Get endpoint. Check on a job.
 	router.HandleFunc(
-		"/get/{id}",
+		"/get/{requestType}/{id}",
 		endpoints.Get(
 			redisClient,
 		),

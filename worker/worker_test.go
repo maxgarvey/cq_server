@@ -55,7 +55,7 @@ func TestWorker(t *testing.T) {
 
 	// Expect the get before work is done.
 	mockedRedis.ExpectGet(
-		"response:token",
+		"doWork:token",
 	).SetVal(
 		string(
 			initialMessageJson,
@@ -71,7 +71,7 @@ func TestWorker(t *testing.T) {
 	}
 	// Expect the set for when the updated record is written.
 	mockedRedis.ExpectSet(
-		"response:token",
+		"doWork:token",
 		finalMessageJson,
 		0,
 		// This is a response code from Redis, example here:
