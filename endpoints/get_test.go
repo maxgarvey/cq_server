@@ -24,7 +24,7 @@ func setupGet(identifier string, status data.Status, body string) (*httptest.Res
 		Client: *db,
 	}
 	router := mux.NewRouter()
-	router.HandleFunc("/get/{id}", Get(mockedRedis))
+	router.HandleFunc("/get/{requestType}/{id}", Get(mockedRedis))
 
 	// Set up fake data in mock redis.
 	responseString, err := json.Marshal(&data.Record{
@@ -44,7 +44,7 @@ func setupGet(identifier string, status data.Status, body string) (*httptest.Res
 	}
 	mock.ExpectGet(
 		fmt.Sprintf(
-			"response:%s",
+			"doWork:%s",
 			identifier,
 		),
 	).SetVal(
@@ -64,7 +64,7 @@ func TestGetDone(t *testing.T) {
 	// Create request.
 	req, err := http.NewRequest(
 		"GET",
-		"/get/doneID",
+		"/get/doWork/doneID",
 		nil,
 	)
 	require.NoError(
@@ -101,7 +101,7 @@ func TestGetNotReady(t *testing.T) {
 	// Create request.
 	req, err := http.NewRequest(
 		"GET",
-		"/get/in_progress",
+		"/get/doWork/in_progress",
 		nil,
 	)
 	require.NoError(t, err)

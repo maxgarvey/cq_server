@@ -48,7 +48,11 @@ func (w Worker) HandleMessage(msg amqp.Delivery) {
 	fmt.Printf("Unmarshalled body: %v\n", thisBody)
 
 	// Find redis record for this message in redis.
-	token := fmt.Sprintf("response:%s", thisBody.ID)
+	token := fmt.Sprintf(
+		"%s:%s",
+		thisBody.RequestType,
+		thisBody.ID,
+	)
 	context := context.TODO()
 	redisRecord, err := w.Redis.Get(
 		context,
