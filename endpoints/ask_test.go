@@ -117,7 +117,7 @@ func TestAsk(t *testing.T) {
 		t,
 		fakeRabbitmq.PublishedMessages,
 		[]string{
-			"{\"Body\":\"{\\\"work\\\":\\\"content\\\"}\",\"ID\":\"token\",\"RequestType\":\"doWork\",\"Status\":0,\"Timestamp\":1604620800}",
+			"{\"body\":\"{\\\"work\\\":\\\"content\\\"}\",\"id\":\"token\",\"request_type\":\"doWork\",\"status\":0,\"timestamp\":1604620800}",
 		},
 	)
 }

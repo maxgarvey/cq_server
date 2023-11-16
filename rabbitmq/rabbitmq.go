@@ -6,7 +6,7 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	config "github.com/maxgarvey/cq_server/config"
+	"github.com/maxgarvey/cq_server/config"
 )
 
 type Rabbit interface {

@@ -8,26 +8,26 @@ import (
 )
 
 type Config struct {
-	Redis    Redis    `yaml:"redis"`
-	Rabbitmq Rabbitmq `yaml:"rabbitmq"`
-	Server   Server   `yaml:"server"`
+	Redis    Redis    `yaml:"redis" json:"redis"`
+	Rabbitmq Rabbitmq `yaml:"rabbitmq" json:"rabbitmq"`
+	Server   Server   `yaml:"server" json:"server"`
 }
 
 type Rabbitmq struct {
-	Username  string `yaml:"username"`
-	Password  string `yaml:"password"`
-	Host      string `yaml:"host"`
-	Port      int    `yaml:"port"`
-	Queuename string `yaml:"queuename"`
+	Username  string `yaml:"username" json:"username"`
+	Password  string `yaml:"password" json:"password"`
+	Host      string `yaml:"host" json:"host"`
+	Port      int    `yaml:"port" json:"port"`
+	Queuename string `yaml:"queuename" json:"queuename"`
 }
 
 type Redis struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
+	Host string `yaml:"host" json:"host"`
+	Port int    `yaml:"port" json:"port"`
 }
 
 type Server struct {
-	Port int `yaml:"port"`
+	Port int `yaml:"port" json:"port"`
 }
 
 func GetConfig(configFile string) Config {
