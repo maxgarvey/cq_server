@@ -52,7 +52,7 @@ func setupAsk(requestType data.RequestType) (*httptest.ResponseRecorder, *mux.Ro
 
 	// Set up fake data in mock redis.
 	record := &data.Record{
-		Body:        "{}",
+		Body:        "{\"work\":\"content\"}",
 		ID:          "token",
 		RequestType: requestType,
 		Status:      data.IN_PROGRESS,
@@ -60,7 +60,10 @@ func setupAsk(requestType data.RequestType) (*httptest.ResponseRecorder, *mux.Ro
 	}
 	recordJSON, err := json.Marshal(record)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(
+			"error marshalling JSON: %s\n",
+			fmt.Errorf("%w", err),
+		)
 	}
 	mock.ExpectSet(
 		fmt.Sprintf(
@@ -69,7 +72,7 @@ func setupAsk(requestType data.RequestType) (*httptest.ResponseRecorder, *mux.Ro
 		),
 		recordJSON,
 		0,
-	)
+	).SetVal("OK")
 
 	return recorder, router, &fakeRabbitmq
 }
@@ -90,7 +93,7 @@ func TestAsk(t *testing.T) {
 	// Create request.
 	req, err := http.NewRequest(
 		"POST",
-		"/ask/EXAMPLE",
+		"/ask/NOOP",
 		requestBody,
 	)
 	require.NoError(

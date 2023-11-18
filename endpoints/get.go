@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -26,10 +27,10 @@ func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) 
 			requestID,
 		)
 
-		// Retrieve response from DB.
-		var response data.Record
+		// Retrieve record from DB.
+		var record data.Record
 		ctx := context.Background()
-		response, err := redisClient.Get(
+		record, err := redisClient.Get(
 			ctx,
 			fmt.Sprintf(
 				"%s:%s",
@@ -38,22 +39,25 @@ func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) 
 			),
 		)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf(
+				"error retrieving record from redis: %s\n",
+				fmt.Errorf("%w", err),
+			)
 		}
 
 		log.Printf(
 			"get endpoint requested. [requestType=%s, ID=%s, status=%s]",
 			requestType.String(),
-			response.ID,
-			fmt.Sprint(response.Status),
+			record.ID,
+			fmt.Sprint(record.Status),
 		)
 		// If response is not ready.
-		if response.Status != data.DONE {
+		if record.Status != data.DONE {
 			fmt.Fprintf(w, "not ready")
 			return
 		}
 
 		// If response is ready, return it.
-		fmt.Fprintf(w, response.Body)
+		json.NewEncoder(w).Encode(record.ToGetResponse())
 	}
 }

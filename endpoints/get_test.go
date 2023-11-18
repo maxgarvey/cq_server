@@ -95,7 +95,7 @@ func TestGetDone(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		"{\"response\":\"content\"}",
+		"{\"body\":\"{\\\"response\\\":\\\"content\\\"}\",\"id\":\"doneID\",\"request_type\":\"NOOP\",\"status\":\"DONE\",\"timestamp\":1607212800}\n",
 		recorder.Body.String(),
 	)
 }
