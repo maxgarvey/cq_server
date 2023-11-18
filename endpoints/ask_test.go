@@ -3,6 +3,7 @@ package endpoints
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +25,7 @@ func fakeRandomToken() string {
 	return "token"
 }
 
-func setupAsk(requestType string) (*httptest.ResponseRecorder, *mux.Router, *rabbitmq.FakeRabbitmq) {
+func setupAsk(requestType data.RequestType) (*httptest.ResponseRecorder, *mux.Router, *rabbitmq.FakeRabbitmq) {
 	recorder := httptest.NewRecorder()
 	db, mock := redismock.NewClientMock()
 	mockedRedis := &redis.Redis{
@@ -53,7 +54,7 @@ func setupAsk(requestType string) (*httptest.ResponseRecorder, *mux.Router, *rab
 	record := &data.Record{
 		Body:        "{}",
 		ID:          "token",
-		RequestType: "doWork",
+		RequestType: requestType,
 		Status:      data.IN_PROGRESS,
 		Timestamp:   clock.Now().Unix(),
 	}
@@ -62,7 +63,10 @@ func setupAsk(requestType string) (*httptest.ResponseRecorder, *mux.Router, *rab
 		log.Fatal(err)
 	}
 	mock.ExpectSet(
-		"doWork:token",
+		fmt.Sprintf(
+			"%s:token",
+			requestType.String(),
+		),
 		recordJSON,
 		0,
 	)
@@ -73,7 +77,7 @@ func setupAsk(requestType string) (*httptest.ResponseRecorder, *mux.Router, *rab
 func TestAsk(t *testing.T) {
 	// Prelim setup.
 	recorder, router, fakeRabbitmq := setupAsk(
-		"doWork",
+		data.NOOP,
 	)
 
 	// Set request body for incoming request to ask endpoint.
@@ -86,7 +90,7 @@ func TestAsk(t *testing.T) {
 	// Create request.
 	req, err := http.NewRequest(
 		"POST",
-		"/ask/doWork",
+		"/ask/EXAMPLE",
 		requestBody,
 	)
 	require.NoError(
@@ -117,7 +121,7 @@ func TestAsk(t *testing.T) {
 		t,
 		fakeRabbitmq.PublishedMessages,
 		[]string{
-			"{\"body\":\"{\\\"work\\\":\\\"content\\\"}\",\"id\":\"token\",\"request_type\":\"doWork\",\"status\":0,\"timestamp\":1604620800}",
+			"{\"body\":\"{\\\"work\\\":\\\"content\\\"}\",\"id\":\"token\",\"request_type\":0,\"status\":0,\"timestamp\":1604620800}",
 		},
 	)
 }

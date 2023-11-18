@@ -2,6 +2,7 @@ package worker
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"testing"
 	"time"
@@ -38,11 +39,13 @@ func TestWorker(t *testing.T) {
 	)
 	clock := clockwork.NewFakeClockAt(timestamp)
 
+	requestType := data.NOOP
+
 	worker, mockedRedis := setupTestRabbit()
 	initialRawMessage := &data.Record{
 		Body:        "{}",
 		ID:          "token",
-		RequestType: "doWork",
+		RequestType: requestType,
 		Status:      data.IN_PROGRESS,
 		Timestamp:   clock.Now().Unix(),
 	}
@@ -55,7 +58,10 @@ func TestWorker(t *testing.T) {
 
 	// Expect the get before work is done.
 	mockedRedis.ExpectGet(
-		"doWork:token",
+		fmt.Sprintf(
+			"%s:token",
+			requestType.String(),
+		),
 	).SetVal(
 		string(
 			initialMessageJson,
@@ -71,7 +77,10 @@ func TestWorker(t *testing.T) {
 	}
 	// Expect the set for when the updated record is written.
 	mockedRedis.ExpectSet(
-		"doWork:token",
+		fmt.Sprintf(
+			"%s:token",
+			requestType.String(),
+		),
 		finalMessageJson,
 		0,
 		// This is a response code from Redis, example here:
