@@ -13,11 +13,14 @@ import (
 	"github.com/maxgarvey/cq_server/redis"
 )
 
+// Worker is responsible for consuming messages from the rabbit queue
+// and doing work based off of the messages.
 type Worker struct {
 	Rabbitmq rabbitmq.Rabbit
 	Redis    *redis.Redis
 }
 
+// Creates a new instance of the worker struct
 func Init(rabbitmq rabbitmq.Rabbit, redis *redis.Redis) *Worker {
 	return &Worker{
 		Rabbitmq: rabbitmq,
@@ -40,6 +43,8 @@ func (w Worker) Work() {
 	)
 }
 
+// HandleMessage handles a single message, structured this way for
+// easy of unit testing.
 func (w Worker) HandleMessage(msg amqp.Delivery) {
 	// Read message.
 	fmt.Printf("Received Message: %s\n", msg.Body)
@@ -50,7 +55,7 @@ func (w Worker) HandleMessage(msg amqp.Delivery) {
 	// Find redis record for this message in redis.
 	token := fmt.Sprintf(
 		"%s:%s",
-		thisBody.RequestType,
+		thisBody.RequestType.String(),
 		thisBody.ID,
 	)
 	context := context.TODO()

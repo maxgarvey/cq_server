@@ -17,14 +17,17 @@ import (
 	"github.com/maxgarvey/cq_server/redis"
 )
 
-func setupGet(identifier string, status data.Status, body string) (*httptest.ResponseRecorder, *mux.Router) {
+func setupGet(requestType data.RequestType, identifier string, status data.Status, body string) (*httptest.ResponseRecorder, *mux.Router) {
 	recorder := httptest.NewRecorder()
 	db, mock := redismock.NewClientMock()
 	mockedRedis := &redis.Redis{
 		Client: *db,
 	}
 	router := mux.NewRouter()
-	router.HandleFunc("/get/{requestType}/{id}", Get(mockedRedis))
+	router.HandleFunc(
+		"/get/{requestType}/{id}",
+		Get(mockedRedis),
+	)
 
 	// Set up fake data in mock redis.
 	responseString, err := json.Marshal(&data.Record{
@@ -44,7 +47,8 @@ func setupGet(identifier string, status data.Status, body string) (*httptest.Res
 	}
 	mock.ExpectGet(
 		fmt.Sprintf(
-			"doWork:%s",
+			"%s:%s",
+			requestType.String(),
 			identifier,
 		),
 	).SetVal(
@@ -55,7 +59,9 @@ func setupGet(identifier string, status data.Status, body string) (*httptest.Res
 }
 
 func TestGetDone(t *testing.T) {
+	requestType := data.NOOP
 	recorder, router := setupGet(
+		requestType,
 		"doneID",
 		data.DONE,
 		"{\"response\":\"content\"}",
@@ -64,7 +70,10 @@ func TestGetDone(t *testing.T) {
 	// Create request.
 	req, err := http.NewRequest(
 		"GET",
-		"/get/doWork/doneID",
+		fmt.Sprintf(
+			"/get/%s/doneID",
+			requestType.String(),
+		),
 		nil,
 	)
 	require.NoError(
@@ -92,7 +101,9 @@ func TestGetDone(t *testing.T) {
 }
 
 func TestGetNotReady(t *testing.T) {
+	requestType := data.NOOP
 	recorder, router := setupGet(
+		requestType,
 		"in_progress",
 		data.IN_PROGRESS,
 		"{notdoneyet;jsongibberish}",
@@ -101,7 +112,10 @@ func TestGetNotReady(t *testing.T) {
 	// Create request.
 	req, err := http.NewRequest(
 		"GET",
-		"/get/doWork/in_progress",
+		fmt.Sprintf(
+			"/get/%s/in_progress",
+			requestType.String(),
+		),
 		nil,
 	)
 	require.NoError(t, err)

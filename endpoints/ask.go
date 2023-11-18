@@ -19,7 +19,9 @@ import (
 // Ask enqueues a request and creates an entry in redis to track it.
 func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Redis, token func() string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		requestType := mux.Vars(r)["requestType"]
+		rawRequestType := mux.Vars(r)["requestType"]
+		requestType := data.GetRequestType(rawRequestType)
+
 		token := token()
 
 		requestBody, err := io.ReadAll(r.Body)
@@ -45,7 +47,7 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 			ctx,
 			fmt.Sprintf(
 				"%s:%s",
-				requestType,
+				requestType.String(),
 				token,
 			),
 			responseJSON,
@@ -56,7 +58,7 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 
 		log.Printf(
 			"ask endpoint requested. [requestType=%s]",
-			requestType,
+			requestType.String(),
 		)
 
 		// Return token associated with this request.

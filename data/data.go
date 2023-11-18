@@ -2,8 +2,10 @@ package data
 
 import (
 	"encoding/json"
+	"log"
 )
 
+// Progress tatuses for a particular message indicating level of doneness.
 type Status int
 
 const (
@@ -11,13 +13,30 @@ const (
 	DONE
 )
 
+type RequestType int
+
+const (
+	NOOP RequestType = iota
+	DEBUG
+	// DEFINE NEW REQUEST TYPES HERE
+)
+
+var requestTypeMap = map[string]RequestType{
+	"debug": DEBUG,
+	"noop":  NOOP,
+}
+
+func GetRequestType(rawRequestType string) RequestType {
+	return requestTypeMap[rawRequestType]
+}
+
 // Record object in redis cache.
 type Record struct {
-	Body        string `redis:"body" json:"body" yaml:"body"`
-	ID          string `redis:"id" json:"id" yaml:"id"`
-	RequestType string `redis:"requestType" json:"request_type" yaml:"request_type"`
-	Status      Status `redis:"status" json:"status" yaml:"status"`
-	Timestamp   int64  `redis:"timestamp" json:"timestamp" yaml:"timestamp"`
+	Body        string      `redis:"body" json:"body" yaml:"body"`
+	ID          string      `redis:"id" json:"id" yaml:"id"`
+	RequestType RequestType `redis:"requestType" json:"request_type" yaml:"request_type"`
+	Status      Status      `redis:"status" json:"status" yaml:"status"`
+	Timestamp   int64       `redis:"timestamp" json:"timestamp" yaml:"timestamp"`
 }
 
 func (r Record) MarshalBinary() ([]byte, error) {
@@ -30,6 +49,20 @@ func (r *Record) UnmarshalBinary(data []byte) error {
 		data,
 		r,
 	)
+}
+
+func (r *Record) DoWork() error {
+	switch r.RequestType {
+	// Print record for DEBUG type.
+	case DEBUG:
+		log.Default().Printf("Received record: %v\n", r)
+	// Perform no options for NOOP.
+	case NOOP:
+	// Catch all also do nothing. This shouldn't be called.
+	default:
+	}
+
+	return nil
 }
 
 // AskResponse is response body to ask endpoint.
