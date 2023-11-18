@@ -28,7 +28,6 @@ func Init(config config.Redis) *Redis {
 			DB:       0,  // use default DB
 		},
 	)
-	defer redisClient.Close()
 
 	return &Redis{
 		Client: *redisClient,

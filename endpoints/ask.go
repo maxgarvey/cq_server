@@ -26,45 +26,59 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 
 		requestBody, err := io.ReadAll(r.Body)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf(
+				"error reading request body: %s\n",
+				fmt.Errorf("%w", err),
+			)
 		}
 
 		// Create redis record of request.
-		response := &data.Record{
+		record := &data.Record{
 			Body:        string(requestBody),
 			ID:          token,
 			RequestType: requestType,
 			Status:      data.IN_PROGRESS,
 			Timestamp:   clock.Now().Unix(),
 		}
-		responseJSON, err := json.Marshal(response)
+		recordJSON, err := json.Marshal(record)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf(
+				"error marshalling JSON for: %v\nerr: %s\n",
+				record,
+				fmt.Errorf("%w", err),
+			)
 		}
 		ctx := context.Background()
+
 		// Put it into redis.
-		redisClient.Set(
-			ctx,
-			fmt.Sprintf(
-				"%s:%s",
-				requestType.String(),
-				token,
-			),
-			responseJSON,
+		key := fmt.Sprintf(
+			"%s:%s",
+			requestType.String(),
+			token,
 		)
+		err = redisClient.Set(
+			ctx,
+			key,
+			recordJSON,
+		)
+		if err != nil {
+			log.Fatalf(
+				"redis write failed for: %s\n%s\n%s\n",
+				key,
+				recordJSON,
+				fmt.Errorf("%w", err),
+			)
+		}
 
-		// enqueue message to perform the work
-		rabbitmq.Publish(string(responseJSON))
+		// Enqueue message to perform the work
+		rabbitmq.Publish(string(recordJSON))
 
+		// Debug message.
 		log.Printf(
 			"ask endpoint requested. [requestType=%s]",
 			requestType.String(),
 		)
 
-		// Return token associated with this request.
-		askResp := &data.AskResponse{
-			ID: token,
-		}
-		json.NewEncoder(w).Encode(&askResp)
+		json.NewEncoder(w).Encode(record.ToAskResponse())
 	}
 }
