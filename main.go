@@ -3,14 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/jonboulle/clockwork"
-	"github.com/thanhpk/randstr"
 
 	"github.com/maxgarvey/cq_server/config"
+	"github.com/maxgarvey/cq_server/data"
 	"github.com/maxgarvey/cq_server/endpoints"
 	"github.com/maxgarvey/cq_server/rabbitmq"
 	"github.com/maxgarvey/cq_server/redis"
@@ -31,6 +32,8 @@ func main() {
 		*configFile,
 	)
 
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	// Connect to redis based off of config.
 	redisClient := redis.Init(
 		conf.Redis,
@@ -45,9 +48,11 @@ func main() {
 			conf.Rabbitmq,
 		)
 		if err != nil {
-			log.Fatalf(
-				"Error connecting to rabbit mq: %s",
-				err.Error(),
+			logger.Error(
+				fmt.Sprintf(
+					"Error connecting to rabbit mq: %s\n",
+					err.Error(),
+				),
 			)
 		}
 		defer rabbitmqClient.Close()
@@ -58,29 +63,38 @@ func main() {
 		clockwork.NewRealClock(),
 		rabbitmqClient,
 		redisClient,
+		logger,
 	)
 
 	// Initialize queue worker.
-	queueWorker := worker.Init(rabbitmqClient, redisClient)
+	queueWorker := worker.Init(rabbitmqClient, redisClient, logger)
 	// Start work.
 	// TODO: add multithreading for workers
 	queueWorker.Work()
 
-	fmt.Printf(
-		"Server listening on 127.0.0.1:%d",
-		conf.Server.Port,
+	logger.Info(
+		fmt.Sprintf(
+			"Server listening on 127.0.0.1:%d\n",
+			conf.Server.Port,
+		),
 	)
 
 	// Kick off endpoints.
-	log.Fatal(
-		http.ListenAndServe(
-			fmt.Sprintf(
-				":%d",
-				conf.Server.Port,
-			),
-			router,
+	err = http.ListenAndServe(
+		fmt.Sprintf(
+			":%d",
+			conf.Server.Port,
 		),
+		router,
 	)
+	if err != nil {
+		logger.Error(
+			fmt.Sprintf(
+				"Error running server: %s\n",
+				err.Error(),
+			),
+		)
+	}
 }
 
 // Router initialize router with endpoints.
@@ -88,12 +102,13 @@ func Router(
 	clock clockwork.Clock,
 	rabbitClient *rabbitmq.Rabbitmq,
 	redisClient *redis.Redis,
+	logger *slog.Logger,
 ) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	// Health check endpoint. Is the service running?
 	router.HandleFunc(
 		"/health",
-		endpoints.Health,
+		endpoints.Health(logger),
 	).Methods("GET")
 	// Ask endpoint. Ask the service to do a job.
 	router.HandleFunc(
@@ -102,7 +117,8 @@ func Router(
 			clock,
 			*rabbitClient,
 			redisClient,
-			makeToken,
+			data.MakeToken,
+			logger,
 		),
 	).Methods("POST")
 	// Get endpoint. Check on a job.
@@ -110,12 +126,9 @@ func Router(
 		"/get/{requestType}/{id}",
 		endpoints.Get(
 			redisClient,
+			logger,
 		),
 	).Methods("GET")
 
 	return router
-}
-
-func makeToken() string {
-	return randstr.String(20)
 }

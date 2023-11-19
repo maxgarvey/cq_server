@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/go-redis/redismock/v9"
@@ -23,10 +25,12 @@ func setupGet(requestType data.RequestType, identifier string, status data.Statu
 	mockedRedis := &redis.Redis{
 		Client: *db,
 	}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	router := mux.NewRouter()
 	router.HandleFunc(
 		"/get/{requestType}/{id}",
-		Get(mockedRedis),
+		Get(mockedRedis, logger),
 	)
 
 	// Set up fake data in mock redis.

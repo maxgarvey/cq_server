@@ -3,6 +3,8 @@ package data
 import (
 	"encoding/json"
 	"log"
+
+	"github.com/thanhpk/randstr"
 )
 
 // Progress tatuses for a particular message indicating level of doneness.
@@ -95,4 +97,9 @@ func (r *Record) ToGetResponse() GetResponse {
 		Status:      r.Status.String(),
 		Timestamp:   r.Timestamp,
 	}
+}
+
+// Method to make tokens for incoming requests.
+func MakeToken() string {
+	return randstr.String(20)
 }
