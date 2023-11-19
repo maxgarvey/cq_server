@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -39,6 +41,7 @@ func setupAsk(requestType data.RequestType) (*httptest.ResponseRecorder, *mux.Ro
 	)
 	clock := clockwork.NewFakeClockAt(timestamp)
 	fakeRabbitmq := rabbitmq.InitFake()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	router.HandleFunc(
 		"/ask/{requestType}",
@@ -47,6 +50,7 @@ func setupAsk(requestType data.RequestType) (*httptest.ResponseRecorder, *mux.Ro
 			&fakeRabbitmq,
 			mockedRedis,
 			fakeRandomToken,
+			logger,
 		),
 	)
 

@@ -1,8 +1,10 @@
 package endpoints
 
 import (
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,6 +13,7 @@ import (
 func TestHealth(t *testing.T) {
 	// Prelim setup.
 	recorder := httptest.NewRecorder()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	// Create request.
 	req, err := http.NewRequest(
@@ -23,7 +26,9 @@ func TestHealth(t *testing.T) {
 	}
 
 	// Process request.
-	http.HandlerFunc(Health).ServeHTTP(
+	http.HandlerFunc(
+		Health(logger),
+	).ServeHTTP(
 		recorder,
 		req,
 	)

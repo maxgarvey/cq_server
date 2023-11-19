@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -23,11 +25,13 @@ func setupTestRabbit() (*Worker, redismock.ClientMock) {
 	mockedRedis := &redis.Redis{
 		Client: *db,
 	}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	worker := &Worker{
-		Rabbitmq: &fakeRabbitmq,
-		Redis:    mockedRedis,
-	}
+	worker := Init(
+		&fakeRabbitmq,
+		mockedRedis,
+		logger,
+	)
 
 	return worker, mock
 }

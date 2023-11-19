@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -17,7 +17,7 @@ import (
 )
 
 // Ask enqueues a request and creates an entry in redis to track it.
-func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Redis, token func() string) func(w http.ResponseWriter, r *http.Request) {
+func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Redis, token func() string, logger *slog.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rawRequestType := mux.Vars(r)["requestType"]
 		requestType := data.GetRequestType(rawRequestType)
@@ -26,9 +26,11 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 
 		requestBody, err := io.ReadAll(r.Body)
 		if err != nil {
-			log.Fatalf(
-				"error reading request body: %s\n",
-				fmt.Errorf("%w", err),
+			logger.Error(
+				fmt.Sprintf(
+					"error reading request body: %s\n",
+					fmt.Errorf("%w", err),
+				),
 			)
 		}
 
@@ -42,10 +44,12 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 		}
 		recordJSON, err := json.Marshal(record)
 		if err != nil {
-			log.Fatalf(
-				"error marshalling JSON for: %v\nerr: %s\n",
-				record,
-				fmt.Errorf("%w", err),
+			logger.Error(
+				fmt.Sprintf(
+					"error marshalling JSON for: %v\nerr: %s\n",
+					record,
+					fmt.Errorf("%w", err),
+				),
 			)
 		}
 		ctx := context.Background()
@@ -62,11 +66,13 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 			recordJSON,
 		)
 		if err != nil {
-			log.Fatalf(
-				"redis write failed for: %s\n%s\n%s\n",
-				key,
-				recordJSON,
-				fmt.Errorf("%w", err),
+			logger.Error(
+				fmt.Sprintf(
+					"redis write failed for: %s\n%s\n%s\n",
+					key,
+					recordJSON,
+					fmt.Errorf("%w", err),
+				),
 			)
 		}
 
@@ -74,9 +80,11 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 		rabbitmq.Publish(string(recordJSON))
 
 		// Debug message.
-		log.Printf(
-			"ask endpoint requested. [requestType=%s]",
-			requestType.String(),
+		logger.Debug(
+			fmt.Sprintf(
+				"ask endpoint requested. [requestType=%s]",
+				requestType.String(),
+			),
 		)
 
 		json.NewEncoder(w).Encode(record.ToAskResponse())

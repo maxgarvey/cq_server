@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
@@ -18,13 +18,15 @@ import (
 type Worker struct {
 	Rabbitmq rabbitmq.Rabbit
 	Redis    *redis.Redis
+	Logger   *slog.Logger
 }
 
 // Creates a new instance of the worker struct
-func Init(rabbitmq rabbitmq.Rabbit, redis *redis.Redis) *Worker {
+func Init(rabbitmq rabbitmq.Rabbit, redis *redis.Redis, logger *slog.Logger) *Worker {
 	return &Worker{
 		Rabbitmq: rabbitmq,
 		Redis:    redis,
+		Logger:   logger,
 	}
 }
 
@@ -38,7 +40,7 @@ func (w Worker) Work() {
 		}
 	}()
 
-	fmt.Println(
+	w.Logger.Info(
 		"Waiting for messages...",
 	)
 }
@@ -47,10 +49,20 @@ func (w Worker) Work() {
 // easy of unit testing.
 func (w Worker) HandleMessage(msg amqp.Delivery) {
 	// Read message.
-	fmt.Printf("Received Message: %s\n", msg.Body)
+	w.Logger.Debug(
+		fmt.Sprintf(
+			"Received Message: %s\n",
+			msg.Body,
+		),
+	)
 	thisBody := data.Record{}
 	json.Unmarshal(msg.Body, &thisBody)
-	fmt.Printf("Unmarshalled body: %v\n", thisBody)
+	w.Logger.Debug(
+		fmt.Sprintf(
+			"Unmarshalled body: %v\n",
+			thisBody,
+		),
+	)
 
 	// Find redis record for this message in redis.
 	token := fmt.Sprintf(
@@ -64,9 +76,11 @@ func (w Worker) HandleMessage(msg amqp.Delivery) {
 		token,
 	)
 	if err != nil {
-		log.Fatalf(
-			"error requesting redis record. err=%v",
-			err,
+		w.Logger.Error(
+			fmt.Sprintf(
+				"error requesting redis record. err=%v",
+				err,
+			),
 		)
 	}
 
@@ -78,9 +92,11 @@ func (w Worker) HandleMessage(msg amqp.Delivery) {
 	// Create JSON to set in Redis
 	updatedRedisRecordJSON, err := json.Marshal(redisRecord)
 	if err != nil {
-		log.Fatalf(
-			"error marshalling updated redis record. err=%v",
-			err,
+		w.Logger.Error(
+			fmt.Sprintf(
+				"error marshalling updated redis record. err=%v",
+				err,
+			),
 		)
 	}
 
@@ -91,9 +107,11 @@ func (w Worker) HandleMessage(msg amqp.Delivery) {
 		updatedRedisRecordJSON,
 	)
 	if err != nil {
-		log.Fatalf(
-			"error updating redis record. err=%v",
-			err,
+		w.Logger.Error(
+			fmt.Sprintf(
+				"error updating redis record. err=%v",
+				err,
+			),
 		)
 	}
 }

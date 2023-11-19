@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,7 +14,7 @@ import (
 )
 
 // Get a response.
-func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) {
+func Get(redisClient *redis.Redis, logger *slog.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse the requestType from URL.
 		rawRequestType := mux.Vars(r)["requestType"]
@@ -22,9 +22,11 @@ func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) 
 
 		// Parse response id from URL.
 		requestID := mux.Vars(r)["id"]
-		log.Printf(
-			"requestID: %s",
-			requestID,
+		logger.Debug(
+			fmt.Sprintf(
+				"requestID: %s",
+				requestID,
+			),
 		)
 
 		// Retrieve record from DB.
@@ -39,17 +41,21 @@ func Get(redisClient *redis.Redis) func(w http.ResponseWriter, r *http.Request) 
 			),
 		)
 		if err != nil {
-			log.Fatalf(
-				"error retrieving record from redis: %s\n",
-				fmt.Errorf("%w", err),
+			logger.Error(
+				fmt.Sprintf(
+					"error retrieving record from redis: %s\n",
+					fmt.Errorf("%w", err),
+				),
 			)
 		}
 
-		log.Printf(
-			"get endpoint requested. [requestType=%s, ID=%s, status=%s]",
-			requestType.String(),
-			record.ID,
-			fmt.Sprint(record.Status),
+		logger.Debug(
+			fmt.Sprintf(
+				"get endpoint requested. [requestType=%s, ID=%s, status=%s]",
+				requestType.String(),
+				record.ID,
+				fmt.Sprint(record.Status),
+			),
 		)
 		// If response is not ready.
 		if record.Status != data.DONE {

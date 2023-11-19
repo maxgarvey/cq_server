@@ -2,15 +2,17 @@ package endpoints
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
 // Basic healthcheck endpoint.
-func Health(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(
-		w,
-		"healthy",
-	)
-	log.Printf("health endpoint requested")
+func Health(logger *slog.Logger) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger.Debug("health endpoint requested")
+		fmt.Fprintf(
+			w,
+			"healthy",
+		)
+	}
 }
