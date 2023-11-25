@@ -8,8 +8,8 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/benbjohnson/clock"
 	"github.com/gorilla/mux"
-	"github.com/jonboulle/clockwork"
 
 	"github.com/maxgarvey/cq_server/data"
 	"github.com/maxgarvey/cq_server/rabbitmq"
@@ -17,7 +17,7 @@ import (
 )
 
 // Ask enqueues a request and creates an entry in redis to track it.
-func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Redis, token func() string, logger *slog.Logger) func(w http.ResponseWriter, r *http.Request) {
+func Ask(clock clock.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Redis, token func() string, logger *slog.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rawRequestType := mux.Vars(r)["requestType"]
 		requestType := data.GetRequestType(rawRequestType)
@@ -32,6 +32,7 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 					fmt.Errorf("%w", err),
 				),
 			)
+			return
 		}
 
 		// Create redis record of request.
@@ -51,6 +52,7 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 					fmt.Errorf("%w", err),
 				),
 			)
+			return
 		}
 		ctx := context.Background()
 
@@ -74,6 +76,7 @@ func Ask(clock clockwork.Clock, rabbitmq rabbitmq.Rabbit, redisClient *redis.Red
 					fmt.Errorf("%w", err),
 				),
 			)
+			return
 		}
 
 		// Enqueue message to perform the work

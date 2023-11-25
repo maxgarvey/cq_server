@@ -103,3 +103,19 @@ func (r *Record) ToGetResponse() GetResponse {
 func MakeToken() string {
 	return randstr.String(20)
 }
+
+type User struct {
+	ID        int
+	Username  string
+	CreatedAt string
+	LastLogin string
+}
+
+type AdminLoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type AdminLoginResponse struct {
+	Token string `json:"token"`
+}

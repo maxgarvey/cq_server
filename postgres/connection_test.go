@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/benbjohnson/clock"
+	"github.com/maxgarvey/cq_server/data"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -38,28 +39,39 @@ func cleanup(mockDB *sql.DB) {
 	mockDB.Close()
 }
 
-func TestUserExists(t *testing.T) {
+func TestGetUser(t *testing.T) {
 	mockDB, mock, _, postgres := setup()
 	defer cleanup(mockDB)
 
-	expectedUsername := "my_user"
+	expectedUser := data.User{
+		ID:        1,
+		Username:  "my_user",
+		CreatedAt: "",
+		LastLogin: "",
+	}
 	expectedPassword := "my_password"
 
-	expectedCount := 1
-	rows := sqlmock.NewRows([]string{"count"}).AddRow(expectedCount)
+	rows := sqlmock.NewRows(
+		[]string{"user_id", "username", "created_at", "last_login"},
+	).AddRow(
+		expectedUser.ID, expectedUser.Username, "", "",
+	)
 	mock.ExpectQuery(
-		"SELECT COUNT\\(\\*\\) "+
+		"SELECT user_id, username, created_at, last_login "+
 			"FROM cq_server_users "+
 			"WHERE username=\\$1 "+
 			"AND password=\\$2",
-	).WithArgs(expectedUsername, expectedPassword).WillReturnRows(rows)
+	).WithArgs(
+		expectedUser.Username, expectedPassword,
+	).WillReturnRows(rows)
 
-	exists, err := postgres.UserExists(
-		expectedUsername,
+	user, err := postgres.GetUser(
+		expectedUser.Username,
 		expectedPassword,
 	)
 	assert.Nil(t, err)
-	assert.True(t, exists)
+
+	assert.Equal(t, expectedUser, user)
 }
 
 func TestUserDoesNotExist(t *testing.T) {
@@ -69,21 +81,22 @@ func TestUserDoesNotExist(t *testing.T) {
 	expectedUsername := "my_user"
 	expectedPassword := "my_password"
 
-	expectedCount := 0
-	rows := sqlmock.NewRows([]string{"count"}).AddRow(expectedCount)
+	rows := sqlmock.NewRows(
+		[]string{"user_id", "username", "created_at", "last_login"},
+	)
 	mock.ExpectQuery(
-		"SELECT COUNT\\(\\*\\) "+
+		"SELECT user_id, username, created_at, last_login "+
 			"FROM cq_server_users "+
 			"WHERE username=\\$1 "+
 			"AND password=\\$2",
 	).WithArgs(expectedUsername, expectedPassword).WillReturnRows(rows)
 
-	exists, err := postgres.UserExists(
+	user, err := postgres.GetUser(
 		expectedUsername,
 		expectedPassword,
 	)
-	assert.Nil(t, err)
-	assert.False(t, exists)
+	assert.Error(t, err, "sql: no rows in result set")
+	assert.Equal(t, user.ID, 0)
 }
 
 func TestUpdateLastLogin(t *testing.T) {

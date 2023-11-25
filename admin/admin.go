@@ -1,37 +1,59 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/maxgarvey/cq_server/postgres"
 )
 
 type Admin struct {
 	Postgres *postgres.Postgres
+	Logger   *slog.Logger
 }
 
-func (a *Admin) Login(username string, password string) (bool, error) {
-	// Check if the user exists.
-	exists, err := a.Postgres.UserExists(username, password)
+func (a *Admin) Login(username string, password string) (string, error) {
+	user, err := a.Postgres.GetUser(
+		username,
+		password,
+	)
 	if err != nil {
-		return false, err
-	}
-
-	if !exists {
-		return false, errors.New(
+		a.Logger.Error(
 			fmt.Sprintf(
-				"No user found for username=%s",
-				username,
+				"error looking up user: %s\n",
+				fmt.Errorf("%w", err),
 			),
 		)
+		return "", err
 	}
 
-	// Update the logged in time.
-	err = a.Postgres.UpdateLastLogin(username)
+	// TODO: figure out what happens for empty user
+	if user.ID < 0 {
+		return "", fmt.Errorf(
+			"invalid user id: %d",
+			user.ID,
+		)
+	}
+	token, err := a.Postgres.CreateSession(user.ID)
 	if err != nil {
-		return true, err
+		a.Logger.Error(
+			fmt.Sprintf(
+				"error looking up user: %s\n",
+				fmt.Errorf("%w", err),
+			),
+		)
+		return "", err
 	}
 
-	return true, nil
+	err = a.Postgres.UpdateLastLogin(user.Username)
+	if err != nil {
+		a.Logger.Error(
+			fmt.Sprintf(
+				"error updating last login: %s\n",
+				fmt.Errorf("%w", err),
+			),
+		)
+		return "", err
+	}
+	return token, nil
 }
