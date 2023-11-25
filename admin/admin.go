@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/benbjohnson/clock"
 	"github.com/maxgarvey/cq_server/postgres"
 )
 
 type Admin struct {
-	Postgres *postgres.Postgres
+	Clock    clock.Clock
+	Postgres postgres.Postgreser
 	Logger   *slog.Logger
 }
 

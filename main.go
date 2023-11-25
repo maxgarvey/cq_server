@@ -77,7 +77,6 @@ func main() {
 	// Initialize router to handle web requests.
 	router := Router(
 		clock,
-		&postgresClient,
 		rabbitmqClient,
 		redisClient,
 		&admin,
@@ -118,7 +117,6 @@ func main() {
 // Router initialize router with endpoints.
 func Router(
 	clock clock.Clock,
-	postgresClient *postgres.Postgres,
 	rabbitClient *rabbitmq.Rabbitmq,
 	redisClient *redis.Redis,
 	admin *admin.Admin,
@@ -154,10 +152,15 @@ func Router(
 	router.HandleFunc(
 		"/admin/login",
 		endpoints.AdminLogin(
-			clock,
 			*admin,
-			logger,
 		),
 	).Methods("POST")
+	router.HandleFunc(
+		"/admin/get/{requestType}/{id}",
+		endpoints.AdminGet(
+			*admin,
+			*redisClient,
+		),
+	).Methods("GET")
 	return router
 }

@@ -22,24 +22,8 @@ func Get(redisClient *redis.Redis, logger *slog.Logger) func(w http.ResponseWrit
 
 		// Parse response id from URL.
 		requestID := mux.Vars(r)["id"]
-		logger.Debug(
-			fmt.Sprintf(
-				"requestID: %s",
-				requestID,
-			),
-		)
 
-		// Retrieve record from DB.
-		var record data.Record
-		ctx := context.Background()
-		record, err := redisClient.Get(
-			ctx,
-			fmt.Sprintf(
-				"%s:%s",
-				requestType.String(),
-				requestID,
-			),
-		)
+		record, err := GetFromRedis(requestID, requestType, *redisClient)
 		if err != nil {
 			logger.Error(
 				fmt.Sprintf(
@@ -47,23 +31,31 @@ func Get(redisClient *redis.Redis, logger *slog.Logger) func(w http.ResponseWrit
 					fmt.Errorf("%w", err),
 				),
 			)
-		}
-
-		logger.Debug(
-			fmt.Sprintf(
-				"get endpoint requested. [requestType=%s, ID=%s, status=%s]",
-				requestType.String(),
-				record.ID,
-				fmt.Sprint(record.Status),
-			),
-		)
-		// If response is not ready.
-		if record.Status != data.DONE {
-			fmt.Fprintf(w, "not ready")
 			return
 		}
 
 		// If response is ready, return it.
 		json.NewEncoder(w).Encode(record.ToGetResponse())
 	}
+}
+
+func GetFromRedis(
+	requestID string, requestType data.RequestType, redisClient redis.Redis,
+) (data.Record, error) {
+	// Retrieve record from Redis.
+	var record data.Record
+	ctx := context.Background()
+	record, err := redisClient.Get(
+		ctx,
+		fmt.Sprintf(
+			"%s:%s",
+			requestType.String(),
+			requestID,
+		),
+	)
+	if err != nil {
+		return record, err
+	}
+
+	return record, nil
 }

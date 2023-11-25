@@ -1,0 +1,25 @@
+package data
+
+// Request type stuff
+type RequestType int
+
+const (
+	NOOP RequestType = iota
+	DEBUG
+	// DEFINE NEW REQUEST TYPES HERE
+)
+
+var requestTypeMap = map[string]RequestType{
+	"debug": DEBUG,
+	"noop":  NOOP,
+}
+
+func GetRequestType(rawRequestType string) RequestType {
+	return requestTypeMap[rawRequestType]
+}
+
+// Reqeusts to server
+type AdminLoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
