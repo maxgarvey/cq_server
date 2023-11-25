@@ -14,6 +14,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type Postgreser interface {
+	GetUser(username string, password string) (data.User, error)
+	UpdateLastLogin(username string) error
+	CreateSession(user_id int) (string, error)
+	GetSession(token string) (data.Session, error)
+	ExtendSession(token string) error
+}
+
 type Postgres struct {
 	Clock      clock.Clock
 	Connection *sql.DB
@@ -118,4 +126,34 @@ func (p *Postgres) CreateSession(user_id int) (string, error) {
 	}
 
 	return session_token, nil
+}
+
+func (p *Postgres) GetSession(token string) (data.Session, error) {
+	var session data.Session
+	if err := p.Connection.QueryRow(
+		"SELECT user_id, token, created_at, good_until "+
+			"FROM sessions "+
+			"WHERE token=$1 ",
+		token,
+	).Scan(
+		&session.UserID, &session.Token, &session.CreatedAt, &session.GoodUntil,
+	); err != nil {
+		return session, err
+	}
+
+	return session, nil
+}
+
+func (p *Postgres) ExtendSession(token string) error {
+	if _, err := p.Connection.Exec(
+		"UPDATE sessions "+
+			"SET good_until=$1 "+
+			"WHERE token=$2",
+		p.Clock.Now().Add(time.Hour*24),
+		token,
+	); err != nil {
+		return err
+	}
+
+	return nil
 }

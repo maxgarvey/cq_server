@@ -135,7 +135,7 @@ func TestGetNotReady(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		"not ready",
+		"{\"body\":\"{notdoneyet;jsongibberish}\",\"id\":\"in_progress\",\"request_type\":\"NOOP\",\"status\":\"IN_PROGRESS\",\"timestamp\":1607212800}\n",
 		recorder.Body.String(),
 	)
 }

@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/thanhpk/randstr"
 )
@@ -14,23 +15,6 @@ const (
 	IN_PROGRESS Status = iota
 	DONE
 )
-
-type RequestType int
-
-const (
-	NOOP RequestType = iota
-	DEBUG
-	// DEFINE NEW REQUEST TYPES HERE
-)
-
-var requestTypeMap = map[string]RequestType{
-	"debug": DEBUG,
-	"noop":  NOOP,
-}
-
-func GetRequestType(rawRequestType string) RequestType {
-	return requestTypeMap[rawRequestType]
-}
 
 // Record object in redis cache.
 type Record struct {
@@ -67,38 +51,6 @@ func (r *Record) DoWork() error {
 	return nil
 }
 
-// AskResponse is the response body to ask endpoint.
-type AskResponse struct {
-	ID string `json:"id"`
-}
-
-// Helper to render ask response.
-func (r *Record) ToAskResponse() AskResponse {
-	return AskResponse{
-		ID: r.ID,
-	}
-}
-
-// GetResponse is the response body to the get endpoint.
-type GetResponse struct {
-	Body        string `json:"body" yaml:"body"`
-	ID          string `json:"id" yaml:"id"`
-	RequestType string `json:"request_type" yaml:"request_type"`
-	Status      string `json:"status" yaml:"status"`
-	Timestamp   int64  `json:"timestamp" yaml:"timestamp"`
-}
-
-// Helper to render get response
-func (r *Record) ToGetResponse() GetResponse {
-	return GetResponse{
-		Body:        r.Body,
-		ID:          r.ID,
-		RequestType: r.RequestType.String(),
-		Status:      r.Status.String(),
-		Timestamp:   r.Timestamp,
-	}
-}
-
 // Method to make tokens for incoming requests.
 func MakeToken() string {
 	return randstr.String(20)
@@ -111,11 +63,9 @@ type User struct {
 	LastLogin string
 }
 
-type AdminLoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type AdminLoginResponse struct {
-	Token string `json:"token"`
+type Session struct {
+	UserID    int
+	Token     string
+	CreatedAt time.Time
+	GoodUntil time.Time
 }

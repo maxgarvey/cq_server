@@ -159,3 +159,58 @@ func TestCreateSession(t *testing.T) {
 		)
 	}
 }
+
+func TestGetSession(t *testing.T) {
+	mockDB, mock, mockClock, postgres := setup()
+	defer cleanup(mockDB)
+
+	expectedSession := data.Session{
+		UserID:    1,
+		Token:     "my_token",
+		CreatedAt: mockClock.Now(),
+		GoodUntil: mockClock.Now().Add(time.Hour * 24),
+	}
+
+	rows := sqlmock.NewRows(
+		[]string{"user_id", "token", "created_at", "good_until"},
+	).AddRow(
+		expectedSession.UserID,
+		expectedSession.Token,
+		mockClock.Now(),
+		mockClock.Now().Add(time.Hour*24),
+	)
+	mock.ExpectQuery(
+		"SELECT user_id, token, created_at, good_until " +
+			"FROM sessions " +
+			"WHERE token=\\$1 ",
+	).WithArgs(
+		expectedSession.Token,
+	).WillReturnRows(rows)
+
+	session, err := postgres.GetSession(
+		expectedSession.Token,
+	)
+	assert.Nil(t, err)
+
+	assert.Equal(t, expectedSession, session)
+}
+
+func TestExtendSession(t *testing.T) {
+	mockDB, mock, mockClock, postgres := setup()
+	defer cleanup(mockDB)
+
+	expectedToken := "my_token"
+
+	mock.ExpectExec(
+		"UPDATE sessions "+
+			"SET good_until=\\$1 "+
+			"WHERE token=\\$2",
+	).WithArgs(
+		mockClock.Now().Add(time.Hour*24), expectedToken,
+	).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	err := postgres.ExtendSession(
+		expectedToken,
+	)
+	assert.Nil(t, err)
+}
