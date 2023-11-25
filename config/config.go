@@ -8,9 +8,18 @@ import (
 )
 
 type Config struct {
+	Postgres Postgres `yaml:"postgres" json:"postgres"`
 	Redis    Redis    `yaml:"redis" json:"redis"`
 	Rabbitmq Rabbitmq `yaml:"rabbitmq" json:"rabbitmq"`
 	Server   Server   `yaml:"server" json:"server"`
+}
+
+type Postgres struct {
+	Host     string `yaml:"host" json:"host"`
+	Port     int    `yaml:"port" json:"port"`
+	Username string `yaml:"username" json:"username"`
+	Password string `yaml:"password" json:"password"`
+	DBName   string `yaml:"db_name" json:"db_name"`
 }
 
 type Rabbitmq struct {

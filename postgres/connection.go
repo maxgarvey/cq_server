@@ -9,16 +9,22 @@ import (
 
 	"github.com/benbjohnson/clock"
 	_ "github.com/lib/pq"
+	"github.com/maxgarvey/cq_server/config"
+	"github.com/maxgarvey/cq_server/data"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Postgres struct {
 	Clock      clock.Clock
 	Connection *sql.DB
-	Logger     slog.Logger
+	Logger     *slog.Logger
 }
 
-func Init(host string, port int, username string, password string, dbname string, logger slog.Logger, clock clock.Clock) Postgres {
+func ConfigInit(config config.Postgres, clock clock.Clock, logger *slog.Logger) Postgres {
+	return Init(config.Host, config.Port, config.Username, config.Password, config.DBName, logger, clock)
+}
+
+func Init(host string, port int, username string, password string, dbname string, logger *slog.Logger, clock clock.Clock) Postgres {
 	connectionString := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, username, password, dbname,
@@ -45,20 +51,22 @@ func Init(host string, port int, username string, password string, dbname string
 	}
 }
 
-func (p *Postgres) UserExists(username string, password string) (bool, error) {
-	var count int
+func (p *Postgres) GetUser(username string, password string) (data.User, error) {
+	var user data.User
 	if err := p.Connection.QueryRow(
-		"SELECT COUNT(*) "+
+		"SELECT user_id, username, created_at, last_login "+
 			"FROM cq_server_users "+
 			"WHERE username=$1 "+
 			"AND password=$2",
 		username,
 		password,
-	).Scan(&count); err != nil {
-		return false, err
+	).Scan(
+		&user.ID, &user.Username, &user.CreatedAt, &user.LastLogin,
+	); err != nil {
+		return user, err
 	}
 
-	return count > 0, nil
+	return user, nil
 }
 
 func (p *Postgres) UpdateLastLogin(username string) error {

@@ -7,12 +7,14 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/benbjohnson/clock"
 	"github.com/gorilla/mux"
-	"github.com/jonboulle/clockwork"
 
+	"github.com/maxgarvey/cq_server/admin"
 	"github.com/maxgarvey/cq_server/config"
 	"github.com/maxgarvey/cq_server/data"
 	"github.com/maxgarvey/cq_server/endpoints"
+	"github.com/maxgarvey/cq_server/postgres"
 	"github.com/maxgarvey/cq_server/rabbitmq"
 	"github.com/maxgarvey/cq_server/redis"
 	"github.com/maxgarvey/cq_server/worker"
@@ -33,6 +35,15 @@ func main() {
 	)
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	clock := clock.New()
+
+	// Connect to postgres based off of config.
+	postgresClient := postgres.ConfigInit(
+		conf.Postgres,
+		clock,
+		logger,
+	)
 
 	// Connect to redis based off of config.
 	redisClient := redis.Init(
@@ -58,11 +69,18 @@ func main() {
 		defer rabbitmqClient.Close()
 	}
 
+	admin := admin.Admin{
+		Postgres: &postgresClient,
+		Logger:   logger,
+	}
+
 	// Initialize router to handle web requests.
 	router := Router(
-		clockwork.NewRealClock(),
+		clock,
+		&postgresClient,
 		rabbitmqClient,
 		redisClient,
+		&admin,
 		logger,
 	)
 
@@ -99,9 +117,11 @@ func main() {
 
 // Router initialize router with endpoints.
 func Router(
-	clock clockwork.Clock,
+	clock clock.Clock,
+	postgresClient *postgres.Postgres,
 	rabbitClient *rabbitmq.Rabbitmq,
 	redisClient *redis.Redis,
+	admin *admin.Admin,
 	logger *slog.Logger,
 ) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
@@ -130,5 +150,14 @@ func Router(
 		),
 	).Methods("GET")
 
+	// Admin endpoints
+	router.HandleFunc(
+		"/admin/login",
+		endpoints.AdminLogin(
+			clock,
+			*admin,
+			logger,
+		),
+	).Methods("POST")
 	return router
 }

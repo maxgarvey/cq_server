@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/go-redis/redismock/v9"
 	"github.com/gorilla/mux"
-	"github.com/jonboulle/clockwork"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -39,7 +39,8 @@ func setupAsk(requestType data.RequestType) (*httptest.ResponseRecorder, *mux.Ro
 		"2006-01-02T15:04:05-0700",
 		"2020-11-06T00:00:00-0000",
 	)
-	clock := clockwork.NewFakeClockAt(timestamp)
+	clock := clock.NewMock()
+	clock.Set(timestamp)
 	fakeRabbitmq := rabbitmq.InitFake()
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
