@@ -8,6 +8,12 @@ import (
 	"github.com/maxgarvey/cq_server/postgres"
 )
 
+type Adminer interface {
+	ExtendSession(token string) error
+	Login(username string, password string) (string, error)
+	ValidateSession(token string) (bool, error)
+}
+
 type Admin struct {
 	Clock    clock.Clock
 	Postgres postgres.Postgreser
