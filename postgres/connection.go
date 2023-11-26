@@ -119,8 +119,8 @@ func (p *Postgres) CreateSession(user_id int) (string, error) {
 			"($1, $2, $3, $4)",
 		user_id,
 		session_token,
-		p.Clock.Now().String(),
-		p.Clock.Now().Add(time.Hour*24).String(),
+		p.Clock.Now(),
+		p.Clock.Now().Add(time.Hour*24),
 	); err != nil {
 		return "", err
 	}
