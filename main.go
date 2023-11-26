@@ -152,14 +152,16 @@ func Router(
 	router.HandleFunc(
 		"/admin/login",
 		endpoints.AdminLogin(
-			*admin,
+			admin,
+			*logger,
 		),
 	).Methods("POST")
 	router.HandleFunc(
 		"/admin/get/{requestType}/{id}",
 		endpoints.AdminGet(
-			*admin,
+			admin,
 			*redisClient,
+			*logger,
 		),
 	).Methods("GET")
 	return router

@@ -3,6 +3,7 @@ package endpoints
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,7 +13,7 @@ import (
 )
 
 func AdminGet(
-	admin admin.Admin, redisClient redis.Redis,
+	admin admin.Adminer, redisClient redis.Redis, logger slog.Logger,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse the requestType from URL.
@@ -25,7 +26,7 @@ func AdminGet(
 		session := r.Header.Get("SESSION")
 		valid, err := admin.ValidateSession(session)
 		if err != nil || !valid {
-			admin.Logger.Error(
+			logger.Error(
 				fmt.Sprintf(
 					"Unable to validate session token: %s\n",
 					fmt.Errorf("%w", err),
@@ -36,7 +37,7 @@ func AdminGet(
 
 		err = admin.ExtendSession(session)
 		if err != nil {
-			admin.Logger.Error(
+			logger.Error(
 				fmt.Sprintf(
 					"Error extending sessino: %s\n",
 					fmt.Errorf("%w", err),
@@ -49,7 +50,7 @@ func AdminGet(
 			requestID, requestType, redisClient,
 		)
 		if err != nil {
-			admin.Logger.Error(
+			logger.Error(
 				fmt.Sprintf(
 					"error retrieving record from redis: %s\n",
 					fmt.Errorf("%w", err),
