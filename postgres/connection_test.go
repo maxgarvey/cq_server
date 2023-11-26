@@ -129,8 +129,8 @@ func TestCreateSession(t *testing.T) {
 		"\\(\\$1, \\$2, \\$3, \\$4\\)").WithArgs(
 		1,
 		sqlmock.AnyArg(),
-		mockClock.Now().String(),
-		mockClock.Now().Add(time.Hour*24).String(),
+		mockClock.Now(),
+		mockClock.Now().Add(time.Hour*24),
 	).WillReturnResult(
 		sqlmock.NewResult(
 			1,

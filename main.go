@@ -70,6 +70,7 @@ func main() {
 	}
 
 	admin := admin.Admin{
+		Clock:    clock,
 		Postgres: &postgresClient,
 		Logger:   logger,
 	}

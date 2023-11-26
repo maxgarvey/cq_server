@@ -1,6 +1,6 @@
 postgres:
   host: 127.0.0.1
-  port: 5672
+  port: 5432
   username: admin
   password: admin
   db_name: postgres

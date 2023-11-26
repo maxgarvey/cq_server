@@ -46,7 +46,7 @@ func (a *Admin) Login(username string, password string) (string, error) {
 	if err != nil {
 		a.Logger.Error(
 			fmt.Sprintf(
-				"error looking up user: %s\n",
+				"error creating session: %s\n",
 				fmt.Errorf("%w", err),
 			),
 		)
