@@ -165,5 +165,16 @@ func Router(
 			*logger,
 		),
 	).Methods("GET")
+	router.HandleFunc(
+		"/admin/ask/{requestType}",
+		endpoints.AdminAsk(
+			admin,
+			clock,
+			rabbitClient,
+			redisClient,
+			data.MakeToken,
+			logger,
+		),
+	).Methods("GET")
 	return router
 }

@@ -23,23 +23,10 @@ func AdminGet(
 		// Parse response id from URL.
 		requestID := mux.Vars(r)["id"]
 
-		session := r.Header.Get("SESSION")
-		valid, err := admin.ValidateSession(session)
-		if err != nil || !valid {
+		valid, err := ValidateAndExtendSession(r, admin)
+		if !valid || err != nil {
 			logger.Error(
-				fmt.Sprintf(
-					"Unable to validate session token: %s\n",
-					fmt.Errorf("%w", err),
-				),
-			)
-			return
-		}
-
-		err = admin.ExtendSession(session)
-		if err != nil {
-			logger.Error(
-				fmt.Sprintf(
-					"Error extending sessino: %s\n",
+				fmt.Sprintf("invalid token or error accessing: %s\n",
 					fmt.Errorf("%w", err),
 				),
 			)
