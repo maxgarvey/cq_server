@@ -12,8 +12,8 @@ func (r *Record) ToAskResponse() AskResponse {
 	}
 }
 
-// GetResponse is the response body to the get endpoint.
-type GetResponse struct {
+// FullRecordResponse is the response body to the get endpoint.
+type FullRecordResponse struct {
 	Body        string `json:"body" yaml:"body"`
 	ID          string `json:"id" yaml:"id"`
 	RequestType string `json:"request_type" yaml:"request_type"`
@@ -21,15 +21,24 @@ type GetResponse struct {
 	Timestamp   int64  `json:"timestamp" yaml:"timestamp"`
 }
 
-// Helper to render get response
-func (r *Record) ToGetResponse() GetResponse {
-	return GetResponse{
+func (r *Record) ToFullRecordResponse() FullRecordResponse {
+	return FullRecordResponse{
 		Body:        r.Body,
 		ID:          r.ID,
 		RequestType: r.RequestType.String(),
 		Status:      r.Status.String(),
 		Timestamp:   r.Timestamp,
 	}
+}
+
+// Helper to render get response
+func (r *Record) ToGetResponse() FullRecordResponse {
+	return r.ToFullRecordResponse()
+}
+
+// Helper to render update response
+func (r *Record) ToUpdateResponse() FullRecordResponse {
+	return r.ToFullRecordResponse()
 }
 
 // Admin stuff:
