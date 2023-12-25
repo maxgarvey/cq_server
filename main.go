@@ -140,6 +140,15 @@ func Router(
 			logger,
 		),
 	).Methods("POST")
+	// Update endpoint. Update a job.
+	router.HandleFunc(
+		"/update/{requestType}/{id}",
+		endpoints.Update(
+			clock,
+			redisClient,
+			logger,
+		),
+	).Methods("POST")
 	// Get endpoint. Check on a job.
 	router.HandleFunc(
 		"/get/{requestType}/{id}",

@@ -1,5 +1,7 @@
 package data
 
+import "strings"
+
 // Request type stuff
 type RequestType int
 
@@ -15,11 +17,15 @@ var requestTypeMap = map[string]RequestType{
 }
 
 func GetRequestType(rawRequestType string) RequestType {
-	return requestTypeMap[rawRequestType]
+	return requestTypeMap[strings.ToLower(rawRequestType)]
 }
 
 // Reqeusts to server
 type AdminLoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type UpdateRequest struct {
+	Status string `json:"status"`
 }

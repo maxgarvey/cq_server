@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/thanhpk/randstr"
@@ -15,6 +16,15 @@ const (
 	IN_PROGRESS Status = iota
 	DONE
 )
+
+var statusMap = map[string]Status{
+	"in_progress": IN_PROGRESS,
+	"done":        DONE,
+}
+
+func GetStatus(rawStatus string) Status {
+	return statusMap[strings.ToLower(rawStatus)]
+}
 
 // Record object in redis cache.
 type Record struct {
