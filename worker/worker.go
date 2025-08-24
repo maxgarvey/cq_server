@@ -9,6 +9,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 
 	"github.com/maxgarvey/cq_server/data"
+	"github.com/maxgarvey/cq_server/handlers"
 	"github.com/maxgarvey/cq_server/rabbitmq"
 	"github.com/maxgarvey/cq_server/redis"
 )
@@ -87,14 +88,13 @@ func (w Worker) HandleMessage(msg amqp.Delivery) {
 	// Do the work based on message type.
 	switch thisBody.RequestType {
 	case data.NOOP:
-		w.Logger.Info("NOOP request type, doing nothing")
+		if err := handlers.HandleNOOP(&redisRecord, w.Logger); err != nil {
+			w.Logger.Error("NOOP handler error", "err", err)
+		}
 	case data.DEBUG:
-		w.Logger.Info(
-			fmt.Sprintf(
-				"DEBUG request type, body: %s",
-				thisBody.Body,
-			),
-		)
+		if err := handlers.HandleDEBUG(&redisRecord, w.Logger); err != nil {
+			w.Logger.Error("DEBUG handler error", "err", err)
+		}
 	// TODO: Add more request types here.
 	default:
 		w.Logger.Error(
