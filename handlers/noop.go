@@ -8,6 +8,6 @@ import (
 
 // HandleNOOP processes a NOOP request.
 func HandleNOOP(record *data.Record, logger *slog.Logger) error {
-	logger.Debug("NOOP handler called", "record", record)
+	logger.Info("NOOP handler called", "record", record)
 	return nil
 }
