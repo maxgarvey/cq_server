@@ -1,6 +1,6 @@
 module github.com/maxgarvey/cq_server
 
-go 1.21.3
+go 1.23.0
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -10,10 +10,10 @@ require (
 	github.com/jonboulle/clockwork v0.4.0
 	github.com/lib/pq v1.10.9
 	github.com/rabbitmq/amqp091-go v1.10.0
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.12.1
 	github.com/stretchr/testify v1.8.4
 	github.com/thanhpk/randstr v1.0.6
-	golang.org/x/crypto v0.32.0
+	golang.org/x/crypto v0.41.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
