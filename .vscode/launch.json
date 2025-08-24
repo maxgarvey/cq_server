@@ -11,6 +11,29 @@
       "mode": "test",
       "program": "${workspaceFolder}/${relativeFileDirname}",
       "showLog": true
-    }
+    },
+    {
+      "name": "Integration Test Current File",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/${relativeFileDirname}",
+      "showLog": true,
+      "buildFlags": [
+        "-tags=integration"
+      ]
+    },
+    {
+      "name": "Integration Test Current File, Just One Test",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/${relativeFileDirname}",
+      "showLog": true,
+      "buildFlags": [
+        "-tags=integration",
+        "-run=${selectedText}"
+      ],
+    },
   ]
 }
