@@ -84,7 +84,26 @@ func (w Worker) HandleMessage(msg amqp.Delivery) {
 		)
 	}
 
-	// TODO: do the work to handle the message.
+	// Do the work based on message type.
+	switch thisBody.RequestType {
+	case data.NOOP:
+		w.Logger.Info("NOOP request type, doing nothing")
+	case data.DEBUG:
+		w.Logger.Info(
+			fmt.Sprintf(
+				"DEBUG request type, body: %s",
+				thisBody.Body,
+			),
+		)
+	// TODO: Add more request types here.
+	default:
+		w.Logger.Error(
+			fmt.Sprintf(
+				"unknown request type: %s",
+				thisBody.RequestType.String(),
+			),
+		)
+	}
 
 	// Update the record to update Redis.
 	redisRecord.Status = data.DONE
