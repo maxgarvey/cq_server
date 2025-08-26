@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -18,6 +19,35 @@ import (
 	"github.com/maxgarvey/cq_server/rabbitmq"
 	"github.com/maxgarvey/cq_server/redis"
 )
+
+type fakeRedis struct{}
+
+func (f fakeRedis) Close() error { return nil }
+func (f *fakeRedis) Get(ctx interface{}, key string) (data.Record, error) {
+	return data.Record{ID: "download-id", RequestType: data.DOWNLOAD, Body: "http://example.com/file.txt"}, nil
+}
+func (f *fakeRedis) Set(ctx interface{}, key string, value []byte) error { return nil }
+
+func TestWorker_HandleMessage_Download(t *testing.T) {
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, nil))
+	db, _ := redismock.NewClientMock()
+	mockedRedis := &redis.Redis{
+		Client: *db,
+	}
+	worker := Worker{
+		Redis:  mockedRedis,
+		Logger: logger,
+	}
+	record := data.Record{ID: "download-id", RequestType: data.DOWNLOAD, Body: "http://example.com/file.txt"}
+	msgBytes, _ := json.Marshal(record)
+	msg := amqp.Delivery{Body: msgBytes}
+	worker.HandleMessage(msg)
+	logOutput := buf.String()
+	if !bytes.Contains([]byte(logOutput), []byte("DOWNLOAD handler called")) {
+		t.Errorf("expected log output to contain 'DOWNLOAD handler called', got: %s", logOutput)
+	}
+}
 
 func setupTestRabbit() (*Worker, redismock.ClientMock) {
 	fakeRabbitmq := rabbitmq.InitFake()

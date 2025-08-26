@@ -8,12 +8,14 @@ type RequestType int
 const (
 	NOOP RequestType = iota
 	DEBUG
+	DOWNLOAD
 	// DEFINE NEW REQUEST TYPES HERE
 )
 
 var requestTypeMap = map[string]RequestType{
-	"debug": DEBUG,
-	"noop":  NOOP,
+	"debug":    DEBUG,
+	"noop":     NOOP,
+	"download": DOWNLOAD,
 }
 
 func GetRequestType(rawRequestType string) RequestType {

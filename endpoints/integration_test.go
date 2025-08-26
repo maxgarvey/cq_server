@@ -4,16 +4,20 @@
 package endpoints
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-redis/redismock/v9"
 	"github.com/gorilla/mux"
 	"github.com/maxgarvey/cq_server/admin"
+	"github.com/maxgarvey/cq_server/handlers"
 	"github.com/maxgarvey/cq_server/rabbitmq"
 	"github.com/maxgarvey/cq_server/redis"
 )
@@ -175,4 +179,66 @@ func TestIntegration_AdminAsk(t *testing.T) {
 	if !found {
 		t.Errorf("expected RabbitMQ Publish to be called with correct record")
 	}
+}
+
+func TestIntegration_Download(t *testing.T) {
+	router, mock, _, _ := setupIntegrationRouter()
+	recorder := httptest.NewRecorder()
+
+	// Setup a test HTTP server to serve a file
+	testContent := "integration download test"
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(testContent))
+	}))
+	defer ts.Close()
+
+	// Prepare download body as JSON using structs
+	downloadBody := handlers.DownloadBody{
+		Source:      ts.URL,
+		Destination: "integration_download.txt",
+	}
+	downloadBodyBytes, _ := json.Marshal(downloadBody)
+
+	expectedRecord := `{"body":"{\"source\":\"` + ts.URL + `\",\"destination\":\"integration_download.txt\"}","id":"test-token","request_type":2,"status":0,"timestamp":0}`
+	mock.ExpectSet("RequestType(2):test-token", []byte(expectedRecord), 0).SetVal("OK")
+
+	// POST to /ask/download
+	request, _ := http.NewRequest(
+		"POST", "/ask/download", strings.NewReader(string(downloadBodyBytes)))
+	router.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Errorf("expected 200 OK, got %d", recorder.Code)
+	}
+
+	expectedRecord = `{"body":"{\"source\":\"` + ts.URL + `\",\"destination\":\"integration_download.txt\"}","id":"test-token","request_type":2,"status":0,"timestamp":0}`
+	mock.ExpectGet("RequestType(2):test-token").SetVal(expectedRecord)
+
+	// Poll for DONE status in the record
+	var done bool
+	var lastBody string
+	for i := 0; i < 10; i++ {
+		time.Sleep(100 * time.Millisecond)
+		rec := httptest.NewRecorder()
+		getReq, _ := http.NewRequest("GET", "/get/download/test-token", nil)
+		router.ServeHTTP(rec, getReq)
+		lastBody = rec.Body.String()
+		if strings.Contains(lastBody, `"status":"DONE"`) || strings.Contains(lastBody, `"status":1`) {
+			done = true
+			break
+		}
+	}
+	if !done {
+		t.Errorf("expected record to be in DONE status, got: %s", lastBody)
+	}
+
+	// Check that the file was downloaded
+	data, err := os.ReadFile("integration_download.txt")
+	if err != nil {
+		t.Fatalf("expected file to be created, got error: %v", err)
+	}
+	if string(data) != testContent {
+		t.Errorf("expected file content %q, got %q", testContent, string(data))
+	}
+
+	// Clean up
 }

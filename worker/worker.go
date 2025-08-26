@@ -95,7 +95,10 @@ func (w Worker) HandleMessage(msg amqp.Delivery) {
 		if err := handlers.HandleDEBUG(&redisRecord, w.Logger); err != nil {
 			w.Logger.Error("DEBUG handler error", "err", err)
 		}
-	// TODO: Add more request types here.
+	case data.DOWNLOAD:
+		if err := handlers.HandleDownload(&redisRecord, w.Logger); err != nil {
+			w.Logger.Error("DOWNLOAD handler error", "err", err)
+		}
 	default:
 		w.Logger.Error(
 			fmt.Sprintf(
